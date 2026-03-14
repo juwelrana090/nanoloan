@@ -1,6 +1,7 @@
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native'
-import React, { useState, useRef } from 'react'
-import { useRouter } from 'expo-router'
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const OTP_LENGTH = 6
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const EmailOTPVerificationScreen = ({ email = 'emil@gmail.com' }: Props) => {
+    const insets = useSafeAreaInsets();
     const router = useRouter()
     const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''))
     const inputRefs = useRef<(TextInput | null)[]>([])
@@ -44,13 +46,13 @@ const EmailOTPVerificationScreen = ({ email = 'emil@gmail.com' }: Props) => {
 
     return (
         <KeyboardAvoidingView
-            className="flex-1"
+            style={{ flex: 1, paddingTop: insets.top }}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <View className="flex-1 bg-[#00C897]">
 
                 {/* Header */}
-                <View className="pt-16 pb-10 px-6">
+                <View className="pb-10 px-6">
                     <Text className="text-[28px] font-bold text-[#0D2B1E]">
                         Email OTP Verification
                     </Text>

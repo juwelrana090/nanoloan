@@ -1,9 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native'
-import React, { useState } from 'react'
-import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
+    const insets = useSafeAreaInsets();
     const router = useRouter()
     const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
@@ -24,10 +26,10 @@ export default function RegisterScreen() {
     }
 
     return (
-        <View className="flex-1 bg-[#00C897]">
+        <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
 
             {/* Header */}
-            <View className="pt-16 pb-10 items-center">
+            <View className="pb-10 items-center">
                 <Text className="text-[28px] font-bold text-[#0D2B1E]">
                     Create Account
                 </Text>

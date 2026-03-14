@@ -1,15 +1,15 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useEffect, useState } from "react";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import SplashScreenAnimated from '@/shared/components/SplashScreenAnimated';
 import { persistor, store } from '@/shared/libs/redux/store';
 import { AuthProvider } from '@/shared/contexts/AuthContext';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import '../global.css';
-
 
 SplashScreen.preventAutoHideAsync();
 
@@ -28,7 +28,7 @@ export default function RootLayout() {
         // await Font.loadAsync({ ... });
 
         // Artificially delay for demo purposes
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (e) {
         console.warn(e);
       } finally {
@@ -45,40 +45,39 @@ export default function RootLayout() {
     }
   }, [appIsReady]);
 
-
   if (!appIsReady) {
-    return (
-      <SplashScreenAnimated />
-    );
+    return <SplashScreenAnimated />;
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Provider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <AuthProvider>
-            <StatusBar
-              hidden={false}
-              barStyle="light-content"
-              backgroundColor="#0A0C2A"
-              translucent
-            />
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="welcome" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="auth"
-                options={{
-                  headerShown: false,
-                  headerStyle: {
-                    backgroundColor: 'transparent',
-                  },
-                }}
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Provider store={store}>
+          <PersistGate loading={null} persistor={persistor}>
+            <AuthProvider>
+              <StatusBar
+                hidden={false}
+                style="light"
+                backgroundColor="#00C897"
+                translucent={false}
               />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            </Stack>
-          </AuthProvider>
-        </PersistGate>
-      </Provider>
-    </GestureHandlerRootView>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="welcome" options={{ headerShown: false }} />
+                <Stack.Screen
+                  name="auth"
+                  options={{
+                    headerShown: false,
+                    headerStyle: {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              </Stack>
+            </AuthProvider>
+          </PersistGate>
+        </Provider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }

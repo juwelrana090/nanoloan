@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
 import { Dimensions, Image, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
   FadeIn,
@@ -13,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { splashLogo } from '@/shared/constants/images';
+import { StatusBar } from 'expo-status-bar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -37,11 +39,11 @@ function FloatingOrb({ size, color, initialX, initialY, delay, duration }: OrbPr
       withRepeat(
         withSequence(
           withTiming(-24, { duration, easing: Easing.inOut(Easing.ease) }),
-          withTiming(24, { duration, easing: Easing.inOut(Easing.ease) }),
+          withTiming(24, { duration, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
-        true,
-      ),
+        true
+      )
     );
   }, []);
 
@@ -77,24 +79,21 @@ function PulsingRing({ delay }: { delay: number }) {
     ringOpacity.value = withDelay(
       delay,
       withRepeat(
-        withSequence(
-          withTiming(0.35, { duration: 900 }),
-          withTiming(0, { duration: 900 }),
-        ),
+        withSequence(withTiming(0.35, { duration: 900 }), withTiming(0, { duration: 900 })),
         -1,
-        false,
-      ),
+        false
+      )
     );
     scale.value = withDelay(
       delay,
       withRepeat(
         withSequence(
           withTiming(1.6, { duration: 1800, easing: Easing.out(Easing.quad) }),
-          withTiming(0.6, { duration: 0 }),
+          withTiming(0.6, { duration: 0 })
         ),
         -1,
-        false,
-      ),
+        false
+      )
     );
   }, []);
 
@@ -122,6 +121,8 @@ function PulsingRing({ delay }: { delay: number }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function SplashScreenAnimated() {
+  const insets = useSafeAreaInsets();
+
   // Logo bounce-in
   const logoScale = useSharedValue(0.3);
   const logoOpacity = useSharedValue(0);
@@ -147,7 +148,7 @@ export default function SplashScreenAnimated() {
     // Title slides up after logo
     titleTranslateY.value = withDelay(
       500,
-      withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) }),
+      withTiming(0, { duration: 600, easing: Easing.out(Easing.quad) })
     );
     titleOpacity.value = withDelay(500, withTiming(1, { duration: 600 }));
 
@@ -157,7 +158,7 @@ export default function SplashScreenAnimated() {
     // Loader bar fills up
     loaderWidth.value = withDelay(
       800,
-      withTiming(width * 0.55, { duration: 1400, easing: Easing.out(Easing.quad) }),
+      withTiming(width * 0.55, { duration: 1400, easing: Easing.out(Easing.quad) })
     );
   }, []);
 
@@ -181,13 +182,41 @@ export default function SplashScreenAnimated() {
       locations={[0, 0.5, 1]}
       start={{ x: 0.5, y: 0 }}
       end={{ x: 0.5, y: 1 }}
-      style={styles.container}
-    >
+      style={styles.container}>
+      <StatusBar style="light" backgroundColor="#0A0C2A" translucent={false} />
       {/* Background decorative orbs */}
-      <FloatingOrb size={220} color="#0D178F" initialX={-80} initialY={-60} delay={0} duration={3200} />
-      <FloatingOrb size={160} color="#0DB7AF" initialX={width - 120} initialY={height - 280} delay={400} duration={2800} />
-      <FloatingOrb size={100} color="#1A2FA0" initialX={width - 60} initialY={120} delay={200} duration={3600} />
-      <FloatingOrb size={80} color="#0DB7AF" initialX={40} initialY={height - 200} delay={600} duration={3000} />
+      <FloatingOrb
+        size={220}
+        color="#0D178F"
+        initialX={-80}
+        initialY={-60}
+        delay={0}
+        duration={3200}
+      />
+      <FloatingOrb
+        size={160}
+        color="#0DB7AF"
+        initialX={width - 120}
+        initialY={height - 280}
+        delay={400}
+        duration={2800}
+      />
+      <FloatingOrb
+        size={100}
+        color="#1A2FA0"
+        initialX={width - 60}
+        initialY={120}
+        delay={200}
+        duration={3600}
+      />
+      <FloatingOrb
+        size={80}
+        color="#0DB7AF"
+        initialX={40}
+        initialY={height - 200}
+        delay={600}
+        duration={3000}
+      />
 
       {/* Centre content */}
       <View style={styles.centre}>
@@ -197,33 +226,22 @@ export default function SplashScreenAnimated() {
 
         {/* Logo */}
         <Animated.View style={[styles.logoContainer, logoStyle]}>
-          <Image
-            source={splashLogo}
-            style={styles.logo}
-            resizeMode="contain"
-          />
+          <Image source={splashLogo} style={styles.logo} resizeMode="contain" />
         </Animated.View>
 
         {/* App name */}
-        <Animated.Text style={[styles.title, titleStyle]}>
-          NanoLoan
-        </Animated.Text>
+        <Animated.Text style={[styles.title, titleStyle]}>NanoLoan</Animated.Text>
 
         {/* Tagline */}
-        <Animated.Text style={[styles.tagline, tagStyle]}>
-          Fast · Secure · Flexible
-        </Animated.Text>
+        <Animated.Text style={[styles.tagline, tagStyle]}>Fast · Secure · Flexible</Animated.Text>
       </View>
 
       {/* Bottom progress bar */}
-      <Animated.View style={styles.loaderTrack}>
+      <Animated.View style={[styles.loaderTrack, { bottom: 80 + insets.bottom }]}>
         <Animated.View style={[styles.loaderBar]}>
           <Animated.View style={[styles.loaderFill, loaderStyle]} />
         </Animated.View>
-        <Animated.Text
-          entering={FadeIn.delay(900).duration(600)}
-          style={styles.loadingText}
-        >
+        <Animated.Text entering={FadeIn.delay(900).duration(600)} style={styles.loadingText}>
           Loading…
         </Animated.Text>
       </Animated.View>
