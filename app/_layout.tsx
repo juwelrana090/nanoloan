@@ -28,7 +28,7 @@ export default function RootLayout() {
         // await Font.loadAsync({ ... });
 
         // Artificially delay for demo purposes
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
       } catch (e) {
         console.warn(e);
       } finally {
@@ -65,6 +65,15 @@ export default function RootLayout() {
                 <Stack.Screen name="welcome" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="auth"
+                  options={{
+                    headerShown: false,
+                    headerStyle: {
+                      backgroundColor: 'transparent',
+                    },
+                  }}
+                />
+                <Stack.Screen
+                  name="kyc"
                   options={{
                     headerShown: false,
                     headerStyle: {

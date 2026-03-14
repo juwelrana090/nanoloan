@@ -44,7 +44,10 @@
 -keep class expo.modules.kotlin.services.FilePermissionService { *; }
 -keep class expo.modules.kotlin.services.FilePermissionService$Permission { *; }
 -keep class expo.modules.asset.** { *; }
+-keep class expo.modules.kotlin.AppContext { *; }
+-keep class kotlin.coroutines.Continuation { *; }
 -dontwarn expo.modules.kotlin.services.**
+-dontwarn kotlin.coroutines.Continuation
 -keepclassmembers class expo.modules.constants.ExpoConstants {
     *;
 }
