@@ -34,6 +34,22 @@ import SelectId from '@/assets/images/ekyc/select-id.png';
 //@ts-ignore
 import RoundedFacial from '@/assets/images/ekyc/rounded-facial.png';
 
+//@ts-ignore
+import home from '@/assets/images/icons/home.svg';
+
+//@ts-ignore
+import analysis from '@/assets/images/icons/analysis.svg';
+
+//@ts-ignore
+import transactions from '@/assets/images/icons/transactions.svg';
+
+//@ts-ignore
+import category from '@/assets/images/icons/category.svg';
+
+//@ts-ignore
+import profile from '@/assets/images/icons/profile.svg';
+
+
 
 export {
     logo,
@@ -48,5 +64,10 @@ export {
     DriverLicense,
     SelectId,
     RoundedFacial,
+    home,
+    analysis,
+    transactions,
+    category,
+    profile,
 };
 
