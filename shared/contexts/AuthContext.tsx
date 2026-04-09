@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                 if (storedUser && storedToken) {
                     const userData = JSON.parse(storedUser);
-                    dispatch(setUser({ ...userData, token: storedToken }));
+                    dispatch(setUser(userData));
                     dispatch(setToken(storedToken));
                     dispatch(setIsAuthenticated(true));
                     console.log('✅ User found in storage');

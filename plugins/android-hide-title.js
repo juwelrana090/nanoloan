@@ -3,7 +3,11 @@ const { withAndroidStyles } = require('@expo/config-plugins')
 module.exports = function androidHideTitle(config) {
     return withAndroidStyles(config, (config) => {
         const styles = config.modResults
-        const allStyles = styles.resources.style ?? []
+        const styleEntries = Array.isArray(styles.resources.style)
+            ? styles.resources.style
+            : styles.resources.style
+                ? [styles.resources.style]
+                : []
 
         const setItem = (styleObj, name, value) => {
             if (!styleObj.item) styleObj.item = []
@@ -15,33 +19,38 @@ module.exports = function androidHideTitle(config) {
             }
         }
 
-        // Apply to ALL styles to be safe
-        allStyles.forEach((style) => {
-            setItem(style, 'windowActionBar', 'false')
-            setItem(style, 'windowNoTitle', 'true')
-            // Also set the android versions for newer APIs
-            setItem(style, 'android:windowActionBar', 'false')
-            setItem(style, 'android:windowNoTitle', 'true')
+        const applyNoTitleBar = (styleObj) => {
+            setItem(styleObj, 'windowActionBar', 'false')
+            setItem(styleObj, 'windowNoTitle', 'true')
+            setItem(styleObj, 'android:windowActionBar', 'false')
+            setItem(styleObj, 'android:windowNoTitle', 'true')
+        }
+
+        styleEntries.forEach((style) => {
+            if (!style.$?.name) return
+            if (style.$.name === 'AppTheme' || style.$.name === 'Theme.App.SplashScreen') {
+                applyNoTitleBar(style)
+            }
         })
 
-        // If AppTheme doesn't exist, create it
-        const hasAppTheme = allStyles.some((s) => s.$.name === 'AppTheme')
+        const hasAppTheme = styleEntries.some((s) => s.$?.name === 'AppTheme')
         if (!hasAppTheme) {
-            styles.resources.style = [
-                ...allStyles,
-                {
-                    $: {
-                        name: 'AppTheme',
-                        parent: 'Theme.AppCompat.DayNight.NoActionBar',
-                    },
-                    item: [
-                        { $: { name: 'windowActionBar' }, _: 'false' },
-                        { $: { name: 'windowNoTitle' }, _: 'true' },
-                        { $: { name: 'android:statusBarColor' }, _: '#00C897' },
-                    ],
+            styleEntries.push({
+                $: {
+                    name: 'AppTheme',
+                    parent: 'Theme.AppCompat.DayNight.NoActionBar',
                 },
-            ]
+                item: [
+                    { $: { name: 'windowActionBar' }, _: 'false' },
+                    { $: { name: 'windowNoTitle' }, _: 'true' },
+                    { $: { name: 'android:windowActionBar' }, _: 'false' },
+                    { $: { name: 'android:windowNoTitle' }, _: 'true' },
+                    { $: { name: 'android:statusBarColor' }, _: '#00C897' },
+                ],
+            })
         }
+
+        styles.resources.style = styleEntries
 
         return config
     })

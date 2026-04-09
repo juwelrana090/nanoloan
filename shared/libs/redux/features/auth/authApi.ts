@@ -1,124 +1,133 @@
 import { apiSlice } from '@/shared/libs/redux/apiSlice';
+import type {
+  ChangePasswordRequest,
+  CheckAvailabilityResponse,
+  ForgotPasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  RegisterResponse,
+  ResendOtpRequest,
+  ResetPasswordRequest,
+  UpdateBasicInfoRequest,
+  UpdateProfileRequest,
+  UserProfile,
+  VerifyEmailRequest,
+  VerifyResetOtpRequest,
+} from '@/shared/libs/types/auth.types';
 
 export const authApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    usersAuthLogin: builder.mutation({
+    register: builder.mutation<RegisterResponse, RegisterRequest>({
       query: (data) => ({
-        url: '/auth/sign-in',
+        url: '/auth/register',
         method: 'POST',
         body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }),
     }),
-    usersAuthLoginUsername: builder.mutation({
+    login: builder.mutation<LoginResponse, LoginRequest>({
       query: (data) => ({
-        url: '/auth/sign-in-username',
+        url: '/auth/login',
         method: 'POST',
         body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }),
     }),
-    usersAuthRegister: builder.mutation({
+    verifyEmail: builder.mutation<void, VerifyEmailRequest>({
       query: (data) => ({
-        url: '/auth/sign-up',
-        method: 'POST',
-        body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }),
-    }),
-    usersAuthSocialLogin: builder.mutation({
-      query: (data: FormData) => ({
-        url: '/auth/social-login',
+        url: '/auth/verify-email',
         method: 'POST',
         body: data,
       }),
     }),
-    usersAuthCheckEmail: builder.mutation({
-      query: (email) => ({
-        url: '/auth/check-email',
-        method: 'POST',
-        body: { email },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }),
-    }),
-    usersAuthCheckUsername: builder.mutation({
-      query: (username) => ({
-        url: '/auth/check-username',
-        method: 'POST',
-        body: { username },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }),
-    }),
-    usersAuthSendOtp: builder.mutation({
+    resendOtp: builder.mutation<void, ResendOtpRequest>({
       query: (data) => ({
-        url: '/auth/send-otp',
+        url: '/auth/resend-otp',
         method: 'POST',
         body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }),
     }),
-    usersAuthVerifyOtp: builder.mutation({
+    forgotPassword: builder.mutation<void, ForgotPasswordRequest>({
       query: (data) => ({
-        url: '/auth/verify-otp',
+        url: '/auth/forgot-password',
         method: 'POST',
         body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }),
     }),
-    usersAuthResetPassword: builder.mutation({
+    verifyResetOtp: builder.mutation<void, VerifyResetOtpRequest>({
+      query: (data) => ({
+        url: '/auth/verify-reset-otp',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    resetPassword: builder.mutation<void, ResetPasswordRequest>({
       query: (data) => ({
         url: '/auth/reset-password',
         method: 'POST',
         body: data,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       }),
     }),
-    userProfile: builder.query({
+    checkEmail: builder.query<CheckAvailabilityResponse, string>({
+      query: (email) => ({
+        url: '/auth/check-email',
+        method: 'GET',
+        params: { email },
+      }),
+    }),
+    checkUsername: builder.query<CheckAvailabilityResponse, string>({
+      query: (username) => ({
+        url: '/auth/check-username',
+        method: 'GET',
+        params: { username },
+      }),
+    }),
+    getMe: builder.query<UserProfile, void>({
       query: () => ({
-        url: '/users/profile',
+        url: '/users/me',
         method: 'GET',
       }),
+      providesTags: ['user'],
     }),
-    userProfileUpdate: builder.mutation({
-      query: (data: FormData) => ({
-        url: '/users/profile',
-        method: 'POST',
+    updateProfile: builder.mutation<UserProfile, UpdateProfileRequest>({
+      query: (data) => ({
+        url: '/users/me',
+        method: 'PUT',
         body: data,
-        // Don't set Content-Type header for FormData - let the browser/React Native set it automatically
-        // This is important for multipart/form-data with proper boundary
+      }),
+      invalidatesTags: ['user'],
+    }),
+    updateBasicInfo: builder.mutation<void, UpdateBasicInfoRequest>({
+      query: (data) => ({
+        url: '/users/me/basic-info',
+        method: 'PUT',
+        body: data,
+      }),
+    }),
+    changePassword: builder.mutation<void, ChangePasswordRequest>({
+      query: (data) => ({
+        url: '/users/me/change-password',
+        method: 'PUT',
+        body: data,
       }),
     }),
   }),
 });
 
 export const {
-  useUsersAuthLoginMutation,
-  useUsersAuthLoginUsernameMutation,
-  useUsersAuthRegisterMutation,
-  useUsersAuthSocialLoginMutation,
-  useUsersAuthCheckEmailMutation,
-  useUsersAuthCheckUsernameMutation,
-  useUsersAuthSendOtpMutation,
-  useUsersAuthVerifyOtpMutation,
-  useUsersAuthResetPasswordMutation,
-  useUserProfileQuery,
-  useLazyUserProfileQuery,
-  useUserProfileUpdateMutation,
-  util: { getRunningQueriesThunk },
+  useRegisterMutation,
+  useLoginMutation,
+  useVerifyEmailMutation,
+  useResendOtpMutation,
+  useForgotPasswordMutation,
+  useVerifyResetOtpMutation,
+  useResetPasswordMutation,
+  useCheckEmailQuery,
+  useLazyCheckEmailQuery,
+  useCheckUsernameQuery,
+  useLazyCheckUsernameQuery,
+  useGetMeQuery,
+  useLazyGetMeQuery,
+  useUpdateProfileMutation,
+  useUpdateBasicInfoMutation,
+  useChangePasswordMutation,
 } = authApi;
