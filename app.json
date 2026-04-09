@@ -170,7 +170,7 @@
     },
     "extra": {
       "router": {},
-      "apiUrl": "https://backend.nanoloan.com"
+      "apiUrl": "https://backend-nanoloan.giize.com"
     }
   }
 }
