@@ -248,9 +248,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             //     AsyncStorage.setItem(STORAGE_KEYS.TOKEN, user.token),
             // ]);
 
-            dispatch(setUser(user));
-            dispatch(setToken(`user.token`));
-            dispatch(setIsAuthenticated(true));
+            // TODO: Implement actual login API call
+            // dispatch(setUser(user));
+            // dispatch(setToken(token));
+            // dispatch(setIsAuthenticated(true));
+            throw new Error('Login not yet implemented');
         } catch (error: any) {
             dispatch(setError(error.message || 'Login failed'));
             throw error;

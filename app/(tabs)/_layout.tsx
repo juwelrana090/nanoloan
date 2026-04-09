@@ -1,6 +1,5 @@
 import { Tabs } from 'expo-router';
-
-import { TabBarIcon } from '@/shared/components/TabBarIcon';
+import { CustomTabBar } from '@/shared/components/CustomTabBar';
 // eslint-disable-next-line import/no-named-as-default
 import ProtectedRoute from '@/shared/components/ProtectedRoute';
 
@@ -11,18 +10,41 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           title: '',
-          tabBarActiveTintColor: 'black',
-          tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
-          tabBarStyle: {
-            backgroundColor: 'rgba(10, 12, 42, 0.9)',
-          },
-        }}>
+        }}
+        tabBar={(props) => <CustomTabBar {...props} />}>
         <Tabs.Screen
           name="index"
           options={{
             headerShown: false,
             title: '',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="analysis"
+          options={{
+            headerShown: false,
+            title: '',
+          }}
+        />
+        <Tabs.Screen
+          name="transactions"
+          options={{
+            headerShown: false,
+            title: '',
+          }}
+        />
+        <Tabs.Screen
+          name="category"
+          options={{
+            headerShown: false,
+            title: '',
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            headerShown: false,
+            title: '',
           }}
         />
       </Tabs>

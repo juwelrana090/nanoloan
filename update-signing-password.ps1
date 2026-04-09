@@ -13,7 +13,7 @@ $passwordPlain = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.Int
 Write-Host ""
 Write-Host "Testing password..." -ForegroundColor Yellow
 
-$testResult = & "C:\Program Files\Java\jdk-17\bin\keytool.exe" -list -keystore android-release.keystore -storepass $passwordPlain -alias bespeaky-key 2>&1
+$testResult = & "C:\Program Files\Java\jdk-17\bin\keytool.exe" -list -keystore android-release.keystore -storepass $passwordPlain -alias nanoloan-key 2>&1
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "[SUCCESS] Password is correct!" -ForegroundColor Green
@@ -24,8 +24,8 @@ if ($LASTEXITCODE -eq 0) {
 # This file contains the keystore information for signing release builds
 # KEEP THIS FILE SECURE - DO NOT COMMIT TO GIT
 
-RELEASE_STORE_FILE=../../android-release.keystore
-RELEASE_KEY_ALIAS=bespeaky-key
+RELEASE_STORE_FILE=../android-release.keystore
+RELEASE_KEY_ALIAS=nanoloan-key
 RELEASE_STORE_PASSWORD=$passwordPlain
 RELEASE_KEY_PASSWORD=$passwordPlain
 "@

@@ -3,8 +3,10 @@ import React, { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import { Svg, Path } from 'react-native-svg'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets()
     const router = useRouter()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -20,10 +22,10 @@ export default function LoginScreen() {
     }
 
     return (
-        <View className="flex-1 bg-[#00C897]">
+        <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
 
             {/* Header */}
-            <View className="pt-16 pb-10 items-center">
+            <View className="pb-10 items-center">
                 <Text className="text-[28px] font-bold text-[#0D2B1E]">
                     Account Login
                 </Text>

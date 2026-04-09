@@ -12,7 +12,6 @@ npx rn-new@latest nanoloan --exporouter --tabs --nativewind --bun
 
 That will scaffold a fully configured Expo Router + NativeWind project in one shot — no manual setup needed.
 
-
 ## 2. Install All Dependencies
 
 ### Expo Core
@@ -80,6 +79,144 @@ npm install -D prettier-plugin-tailwindcss
 npm install react-native-toast-message react-native-nitro-modules react-native-worklets-core react-native-web react-dom
 ```
 
+### Android Release keystore
+
+#### Step 1: Verify Java Installation
+
+**For Bash/Git Bash:**
+
+```bash
+# Check Java version
+java -version
+
+# Find keytool location
+KEYTOOL_PATH=$(find "/c/Program Files/Java" -name "keytool.exe" 2>/dev/null | head -1)
+if [ -n "$KEYTOOL_PATH" ]; then
+    echo "Found keytool at: $KEYTOOL_PATH"
+else
+    echo "Keytool not found. Please install Java JDK."
+fi
+```
+
+**For PowerShell:**
+
+```powershell
+# Check Java version
+java -version
+
+# Find keytool location
+$possiblePaths = @(
+    "C:\Program Files\Java",
+    "C:\Program Files (x86)\Java",
+    "C:\Program Files\Eclipse Adoptium",
+    "C:\Program Files\OpenJDK"
+)
+$keytool = $possiblePaths | ForEach-Object {
+    Get-ChildItem -Path $_ -Recurse -Filter "keytool.exe" -ErrorAction SilentlyContinue
+} | Select-Object -First 1
+
+if ($keytool) {
+    Write-Host "Found keytool at: $($keytool.FullName)"
+} else {
+    Write-Host "Keytool not found. Please install Java JDK."
+}
+```
+
+#### Step 2: Generate Keystore File
+
+**For Bash/Git Bash:**
+
+```bash
+# Navigate to android directory
+cd android
+
+# Use keytool directly (adjust path if needed)
+"/c/Program Files/Java/jdk-17/bin/keytool.exe" -genkeypair \ -v \ -storetype PKCS12 \ -keystore android-release.keystore \ -alias nanoloan-key \ -keyalg RSA \ -keysize 2048 \ -validity 10000
+```
+
+**For PowerShell:**
+
+```powershell
+# Navigate to android directory
+cd android
+
+# Use keytool directly (adjust path if needed)
+& "C:\Program Files\Java\jdk-17\bin\keytool.exe" -genkeypair ` -v ` -storetype PKCS12 ` -keystore android-release.keystore ` -alias nanoloan-key ` -keyalg RSA ` -keysize 2048 ` -validity 10000
+```
+
+**When prompted, enter the following information:**
+
+```text
+Enter keystore password: [YOUR_PASSWORD]
+Re-enter new password: [YOUR_PASSWORD]
+
+What is your first and last name?
+  [Unknown]:  Nano Loan
+
+What is the name of your organizational unit?
+  [Unknown]:  Miguns Technology Ltd
+
+What is the name of your organization?
+  [Unknown]:  Miguns Technology Ltd
+
+What is the name of your City or Locality?
+  [Unknown]:  Dhaka
+
+What is the name of your State or Province?
+  [Unknown]:  Dhaka
+
+What is the two-letter country code for this unit?
+  [Unknown]:  BD
+
+Is CN=Nano Loan, OU=Miguns Technology Ltd, O=Miguns Technology Ltd, L=Dhaka, ST=Dhaka, C=BD correct?
+  [no]:  yes
+```
+
+#### Step 3: Move Keystore to App Directory
+
+```powershell
+# Move keystore from android/ to android/app/
+Move-Item android-release.keystore app\android-release.keystore
+```
+
+#### Step 4: Create Signing Properties File
+
+Create `android-signing.properties` in your project root (same level as `android/` folder):
+
+```properties
+# Android Signing Configuration
+# IMPORTANT: Keep this file secure and never commit to version control
+
+RELEASE_STORE_FILE=../../android-release.keystore
+RELEASE_STORE_PASSWORD=YOUR_PASSWORD
+RELEASE_KEY_ALIAS=nanoloan-key
+RELEASE_KEY_PASSWORD=YOUR_PASSWORD
+```
+
+#### Step 5: Verify Keystore (Optional)
+
+```powershell
+# List certificate fingerprints
+& "C:\Program Files\Java\jdk-17\bin\keytool.exe" -list -v `
+    -keystore app\android-release.keystore `
+    -alias nanoloan-key `
+    -storepass "YOUR_PASSWORD" | Select-String -Pattern "SHA1:|SHA256:|MD5:"
+```
+
+#### Step 6: Verify .gitignore
+
+Ensure your `.gitignore` contains these entries:
+
+```gitignore
+# Signing & Credentials
+*.jks
+*.keystore
+android-signing.properties
+key.properties
+credentials.json
+android-service-account.json
+```
+
 ```bash
 npm cache clean --force
 npm install
@@ -91,5 +228,11 @@ cd android
 cd ..
 npm run android:device
 
-```
 
+
+netstat -ano | findstr :8081
+taskkill /PID <PID> /F
+
+npx kill-port 8081
+
+```

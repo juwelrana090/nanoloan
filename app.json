@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "nanoloan",
-    "slug": "nanoloan",
+    "name": "Nano Loan",
+    "slug": "nano-loan",
     "version": "1.0.0",
     "scheme": "nanoloan",
     "platforms": [
@@ -15,6 +15,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugins/android-hide-title.js",
       "./plugins/android-manifest-fix.js",
       "./plugins/android-release-signing.js",
       "./plugins/android-play-console-fixes.js",
@@ -30,7 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#00C897",
           "image": "./assets/images/splash-icon.png",
           "dark": {
             "image": "./assets/images/splash-icon-dark.png",
@@ -105,10 +106,12 @@
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    // ✅ REMOVED androidStatusBar entirely — handled in _layout.tsx via expo-status-bar
+    // This was causing the splash color conflict warning on every build
+    "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/images/splash.png",
+      "image": "./assets/images/splash-logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -121,7 +124,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#00C897"
       },
       "package": "com.nano.loan.app",
       "permissions": [
@@ -165,7 +168,7 @@
         "implementation platform('com.google.firebase:firebase-bom:34.2.0')",
         "implementation 'com.google.firebase:firebase-analytics'"
       ],
-      "edgeToEdgeEnabled": true,
+      "edgeToEdgeEnabled": false,
       "predictiveBackGestureEnabled": false
     },
     "extra": {

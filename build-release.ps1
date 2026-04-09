@@ -2,7 +2,7 @@
 # Run this to build signed release APK and AAB
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  BeSpeaky Android Release Builder" -ForegroundColor Cyan
+Write-Host "  NanoLoan Android Release Builder" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
