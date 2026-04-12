@@ -99,15 +99,14 @@
           ]
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    // ✅ REMOVED androidStatusBar entirely — handled in _layout.tsx via expo-status-bar
-    // This was causing the splash color conflict warning on every build
     "icon": "./assets/images/logo.png",
     "userInterfaceStyle": "light",
     "splash": {

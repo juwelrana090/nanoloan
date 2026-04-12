@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRegister } from '@/modules/register/hooks/useRegister';
+import DatePickerField from '@/shared/components/DatePickerField';
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
@@ -150,17 +151,11 @@ export default function RegisterScreen() {
           {/* Date Of Birth */}
           <View className="mb-4">
             <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Date Of Birth</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 justify-center">
-              <TextInput
-                value={dateOfBirth}
-                onChangeText={setDateOfBirth}
-                placeholder="DD/MM/YYYY"
-                placeholderTextColor="#A0C4B0"
-                keyboardType="numeric"
-                className="text-[15px] text-[#1A1A1A]"
-                editable={!isLoading}
-              />
-            </View>
+            <DatePickerField
+              value={dateOfBirth}
+              onChange={setDateOfBirth}
+              disabled={isLoading}
+            />
           </View>
 
           {/* Password */}
