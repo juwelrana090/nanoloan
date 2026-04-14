@@ -34,10 +34,18 @@ export const useLogin = () => {
     setError(null);
     try {
       const response = await loginMutation(data).unwrap();
+      console.log('user login response :::', response);
       await persistLoginSession(dispatch, response);
       router.replace('/(tabs)');
     } catch (err: any) {
       const msg = err?.data?.message ?? 'Login failed. Please try again.';
+
+      // Check if email verification is required
+      if (msg === 'Please verify your email first') {
+        router.replace(`/auth/email-otp-verification?email=${data.identifier}` as any);
+        return;
+      }
+
       setError(Array.isArray(msg) ? msg[0] : msg);
     }
   };
