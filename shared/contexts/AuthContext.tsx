@@ -1,5 +1,15 @@
 import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
 import { DeviceToken, User } from '@/shared/libs/types/user.types';
+import {
+  useLazyCheckEmailQuery,
+  useLazyCheckUsernameQuery,
+  useLoginMutation,
+  useRegisterMutation,
+  useVerifyEmailMutation,
+  useResendOtpMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
+} from '@/shared/libs/redux/features/auth/authApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useGlobalSearchParams } from 'expo-router';
@@ -56,12 +66,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const globParams = useGlobalSearchParams();
 
     const dispatch = useAppDispatch();
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { showSuccess, showError, showInfo, showWarning } = useToast();
 
     const { user, token, deviceToken, isLoading, isAuthenticated, error } = useAppSelector(
         (state) => state.auth
     );
+
+    // RTK Query hooks
+    const [loginMutation] = useLoginMutation();
+    const [registerMutation] = useRegisterMutation();
+    const [verifyEmailMutation] = useVerifyEmailMutation();
+    const [resendOtpMutation] = useResendOtpMutation();
+    const [forgotPasswordMutation] = useForgotPasswordMutation();
+    const [resetPasswordMutation] = useResetPasswordMutation();
+    const [checkEmailQuery] = useLazyCheckEmailQuery();
+    const [checkUsernameQuery] = useLazyCheckUsernameQuery();
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -190,71 +209,49 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const checkEmail = async (email: string) => {
         try {
-            return false;
-            // const res = await usersAuthCheckEmail(email).unwrap();
-            // console.log('Email available', res.available);
-            // if (!res.available) {
-            //     return false;
-            // }
-            // return true;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const res = await checkEmailQuery(email).unwrap();
+            // Return true if email does NOT exist (is available)
+            return !res.exists;
         } catch (error) {
+            console.error('Error checking email:', error);
             return false;
         }
     };
 
     const checkUsername = async (username: string) => {
         try {
-            return false;
-            // const res = await usersAuthCheckUsername(username).unwrap();
-            // console.log('Username available', res.available);
-            // if (!res.available) {
-            //     return false;
-            // }
-            // return true;
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const res = await checkUsernameQuery(username).unwrap();
+            // Return true if username does NOT exist (is available)
+            return !res.exists;
         } catch (error) {
+            console.error('Error checking username:', error);
             return false;
         }
     };
 
-    const login = async (username: string, password: string) => {
+    const login = async (identifier: string, password: string) => {
         try {
             dispatch(setIsLoading(true));
             dispatch(setError(null));
 
-            // let response;
+            const response = await loginMutation({ identifier, password }).unwrap();
+            const { accessToken, user } = response.data;
 
-            // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Save to AsyncStorage
+            await Promise.all([
+                AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user)),
+                AsyncStorage.setItem(STORAGE_KEYS.TOKEN, accessToken),
+            ]);
 
-            // if (emailRegex.test(username)) {
-            //     // Login with email - use 'email' field
-            //     response = await loginEmail({ email: username, password }).unwrap();
-            // } else {
-            //     // Login with username - use 'username' field
-            //     response = await loginUsername({ username, password }).unwrap();
-            // }
+            dispatch(setUser(user));
+            dispatch(setToken(accessToken));
+            dispatch(setIsAuthenticated(true));
 
-            // console.log('Login response:', response);
-
-            // if (!response.success) {
-            //     throw new Error(response.message || 'Login failed');
-            // }
-
-            // // Save to AsyncStorage
-            // const { data: user } = response;
-            // await Promise.all([
-            //     AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user)),
-            //     AsyncStorage.setItem(STORAGE_KEYS.TOKEN, user.token),
-            // ]);
-
-            // TODO: Implement actual login API call
-            // dispatch(setUser(user));
-            // dispatch(setToken(token));
-            // dispatch(setIsAuthenticated(true));
-            throw new Error('Login not yet implemented');
+            showSuccess('Login successful');
         } catch (error: any) {
-            dispatch(setError(error.message || 'Login failed'));
+            const errorMsg = error?.data?.message || 'Login failed';
+            dispatch(setError(errorMsg));
+            showError(errorMsg);
             throw error;
         } finally {
             dispatch(setIsLoading(false));
@@ -265,39 +262,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: string;
         username: string;
         password: string;
-        learningLanguage: string;
+        fullName: string;
+        phoneNumber: string;
+        dateOfBirth: string;
     }) => {
-        /*try {
+        try {
             dispatch(setIsLoading(true));
             dispatch(setError(null));
 
-            const payload = {
-                ...userData,
-                role: 'student',
-            };
+            const response = await registerMutation(userData).unwrap();
 
-            const response = await registerMutation(payload).unwrap();
-
-            if (!response.success) {
-                throw new Error(response.message || 'Registration failed');
-            }
-
-            // Save to AsyncStorage
-            const { token, user } = response;
-            await Promise.all([
-                AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user)),
-                AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token),
-            ]);
-
-            dispatch(setUser({ ...user, token }));
-            dispatch(setToken(token));
-            dispatch(setIsAuthenticated(true));
+            showSuccess('Registration successful. Please verify your email.');
+            return response;
         } catch (error: any) {
-            dispatch(setError(error.message || 'Registration failed'));
+            const errorMsg = error?.data?.message || 'Registration failed';
+            dispatch(setError(errorMsg));
+            showError(errorMsg);
             throw error;
         } finally {
             dispatch(setIsLoading(false));
-        }*/
+        }
     };
 
 
@@ -306,57 +290,58 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const sendOtp = async (email: string) => {
-        /*try {
+        try {
             dispatch(setError(null));
-            const response = await usersAuthSendOtp({ email }).unwrap();
-            if (!response.success) {
-                throw new Error(response.message || 'OTP send failed');
-            }
+            dispatch(setIsLoading(true));
+
+            await resendOtpMutation({ email }).unwrap();
+            showSuccess('OTP sent successfully');
         } catch (error: any) {
-            dispatch(setError(error.message || 'OTP send failed'));
+            const errorMsg = error?.data?.message || 'Failed to send OTP';
+            dispatch(setError(errorMsg));
+            showError(errorMsg);
             throw error;
         } finally {
             dispatch(setIsLoading(false));
-        }*/
+        }
     };
 
     const verifyOtp = async (email: string, otp: string) => {
-        /*try {
+        try {
             dispatch(setError(null));
-            const response = await usersAuthVerifyOtp({ email, otp }).unwrap();
-            if (!response.success) {
-                throw new Error(response.message || 'OTP verification failed');
-            }
+            dispatch(setIsLoading(true));
+
+            await verifyEmailMutation({ email, otp }).unwrap();
+            showSuccess('Email verified successfully');
         } catch (error: any) {
-            dispatch(setError(error.message || 'OTP verification failed'));
+            const errorMsg = error?.data?.message || 'OTP verification failed';
+            dispatch(setError(errorMsg));
+            showError(errorMsg);
             throw error;
         } finally {
             dispatch(setIsLoading(false));
-        }*/
+        }
     };
 
-    const resetPassword = async (email: string, newPassword: string, confirmPassword: string) => {
-        /*try {
+    const resetPassword = async (email: string, otp: string, newPassword: string) => {
+        try {
             dispatch(setError(null));
-            const response = await usersAuthResetPassword({
-                email,
-                newPassword,
-                confirmPassword,
-            }).unwrap();
-            if (!response.success) {
-                throw new Error(response.message || 'Password reset failed');
-            }
+            dispatch(setIsLoading(true));
+
+            await resetPasswordMutation({ email, otp, newPassword }).unwrap();
+            showSuccess('Password reset successful');
         } catch (error: any) {
-            dispatch(setError(error.message || 'Password reset failed'));
+            const errorMsg = error?.data?.message || 'Password reset failed';
+            dispatch(setError(errorMsg));
+            showError(errorMsg);
             throw error;
         } finally {
             dispatch(setIsLoading(false));
-        }*/
+        }
     };
 
     const updateUser = (userData: Partial<User>) => {
-        // TODO: Implement user update with RTK Query
-        // console.log('Update user not yet implemented with RTK Query:', userData);
+        dispatch(setUser(userData));
     };
 
     const value: AuthContextType = {

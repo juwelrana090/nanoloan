@@ -17,7 +17,7 @@ const CheckmarkIcon = () => (
 const ID_TYPES = [
   { id: 'id_card', label: 'ID card', image: IdCard },
   { id: 'passport', label: 'Passport', image: Passport },
-  { id: 'drivers_license', label: "Driver's license", image: DriverLicense },
+  // { id: 'drivers_license', label: "Driver's license", image: DriverLicense },
 ];
 
 export default function SelectIDTypeScreen() {

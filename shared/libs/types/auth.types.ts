@@ -1,6 +1,20 @@
 // All auth API request/response types derived from Swagger contracts.
 // Field names are case-sensitive and match the server DTOs exactly.
 
+// ─── API Response Wrappers ─────────────────────────────────────────────────────
+
+export interface ApiSuccessResponse<T = unknown> {
+  success: true;
+  message: string;
+  data: T;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  message: string;
+  errors?: string[];
+}
+
 // ─── Register ────────────────────────────────────────────────────────────────
 
 export interface RegisterRequest {
@@ -26,22 +40,25 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  // TODO: Verify exact shape against live API — accessToken + user is standard NestJS JWT pattern
-  accessToken: string;
-  user: UserProfile;
+  success: boolean;
+  message: string;
+  data: {
+    accessToken: string;
+    user: UserProfile;
+  };
 }
 
 // ─── Verify Email ─────────────────────────────────────────────────────────────
 
 export interface VerifyEmailRequest {
-  userId: string;
+  email: string;
   otp: string; // exactly 6 chars
 }
 
 // ─── Resend OTP ───────────────────────────────────────────────────────────────
 
 export interface ResendOtpRequest {
-  userId: string;
+  email: string;
 }
 
 // ─── Forgot Password ──────────────────────────────────────────────────────────
@@ -53,14 +70,14 @@ export interface ForgotPasswordRequest {
 // ─── Verify Reset OTP ────────────────────────────────────────────────────────
 
 export interface VerifyResetOtpRequest {
-  userId: string;
+  email: string;
   otp: string; // exactly 6 chars
 }
 
 // ─── Reset Password ───────────────────────────────────────────────────────────
 
 export interface ResetPasswordRequest {
-  userId: string;
+  email: string;
   otp: string; // exactly 6 chars
   newPassword: string; // min 8
 }
@@ -68,8 +85,7 @@ export interface ResetPasswordRequest {
 // ─── Availability Checks ──────────────────────────────────────────────────────
 
 export interface CheckAvailabilityResponse {
-  // TODO: Verify exact shape against live API
-  available: boolean;
+  exists: boolean;
 }
 
 // ─── User Profile ─────────────────────────────────────────────────────────────
@@ -81,14 +97,35 @@ export interface UserProfile {
   username: string;
   phoneNumber: string;
   dateOfBirth: string;
-  isEmailVerified: boolean;
-  role: string;
+  age?: number;
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  role: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  profile?: UserProfileBasicInfo | null;
+  addresses?: Address[];
+}
+
+export interface UserProfileBasicInfo {
   maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
   educationLevel?: 'PRIMARY' | 'SECONDARY' | 'DIPLOMA' | 'BACHELOR' | 'MASTER' | 'PHD' | 'OTHER';
   nationalId?: string;
   tin?: string;
   passportNo?: string;
+}
+
+export interface Address {
+  id: string;
+  type: 'PRESENT' | 'PERMANENT';
+  address: string;
+  postCode: string;
+  city: string;
+  state: string;
+  country: string;
+  yearsAtAddress: number;
+  isPrimary: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -110,7 +147,41 @@ export interface UpdateBasicInfoRequest {
   passportNo?: string;
 }
 
+// ─── Address Management ────────────────────────────────────────────────────────
+
+export interface AddAddressRequest {
+  type: 'PRESENT' | 'PERMANENT';
+  address: string;
+  postCode: string;
+  city: string;
+  state: string;
+  country: string;
+  yearsAtAddress: number;
+  isPrimary?: boolean;
+}
+
+export interface UpdateAddressRequest {
+  type?: 'PRESENT' | 'PERMANENT';
+  address?: string;
+  postCode?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  yearsAtAddress?: number;
+  isPrimary?: boolean;
+}
+
+// ─── Fingerprint Management ────────────────────────────────────────────────────
+
+export interface RegisterFingerprintRequest {
+  fingerprintData: string; // base64-encoded fingerprint template
+}
+
 export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string; // min 8
+}
+
+export interface DeleteAccountRequest {
+  password: string; // Current account password for confirmation
 }

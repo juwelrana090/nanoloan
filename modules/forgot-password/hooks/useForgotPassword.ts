@@ -14,14 +14,8 @@ export const useForgotPassword = () => {
   const sendResetEmail = async (email: string) => {
     setError(null);
     try {
-      // TODO: Verify if forgot-password response returns userId
-      const res = await forgotMutation({ email }).unwrap();
-      // @ts-ignore — shape TBD
-      if (res?.userId) {
-        router.push(`/auth/forgot-password-otp?userId=${res.userId}` as any);
-      } else {
-        router.push('/auth/forgot-password-otp' as any);
-      }
+      await forgotMutation({ email }).unwrap();
+      router.push(`/auth/forgot-password-otp?email=${encodeURIComponent(email)}` as any);
     } catch (err: any) {
       const msg = err?.data?.message ?? 'Failed to send reset email. Please try again.';
       setError(Array.isArray(msg) ? msg[0] : msg);
@@ -31,7 +25,7 @@ export const useForgotPassword = () => {
   return { sendResetEmail, isSendingEmail, error };
 };
 
-export const useVerifyResetOtp = (userId: string) => {
+export const useVerifyResetOtp = (email: string) => {
   const [verifyMutation, { isLoading }] = useVerifyResetOtpMutation();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -39,8 +33,8 @@ export const useVerifyResetOtp = (userId: string) => {
   const verifyOtp = async (otp: string) => {
     setError(null);
     try {
-      await verifyMutation({ userId, otp }).unwrap();
-      router.push(`/auth/reset-password?userId=${userId}&otp=${otp}` as any);
+      await verifyMutation({ email, otp }).unwrap();
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}&otp=${otp}` as any);
     } catch (err: any) {
       const msg = err?.data?.message ?? 'OTP verification failed. Please try again.';
       setError(Array.isArray(msg) ? msg[0] : msg);
@@ -55,10 +49,10 @@ export const useResetPassword = () => {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  const resetPassword = async (userId: string, otp: string, newPassword: string) => {
+  const resetPassword = async (email: string, otp: string, newPassword: string) => {
     setError(null);
     try {
-      await resetMutation({ userId, otp, newPassword }).unwrap();
+      await resetMutation({ email, otp, newPassword }).unwrap();
       router.replace('/auth/login');
     } catch (err: any) {
       const msg = err?.data?.message ?? 'Password reset failed. Please try again.';

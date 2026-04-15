@@ -18,7 +18,7 @@ const EmailOTPVerificationScreen = () => {
   const insets = useSafeAreaInsets();
   const { userId, email } = useLocalSearchParams<{ userId: string; email: string }>();
   const { verify, resend, isVerifying, isResending, error, resendSuccess } = useVerifyEmail(
-    userId ?? ''
+    email ?? ''
   );
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const inputRefs = useRef<(TextInput | null)[]>([]);
@@ -44,7 +44,7 @@ const EmailOTPVerificationScreen = () => {
 
   const handleVerify = () => {
     if (isFilled && !isDisabled) {
-      verify(otp.join(''));
+      verify(email,otp.join(''));
     }
   };
 

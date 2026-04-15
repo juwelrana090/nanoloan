@@ -14,7 +14,7 @@ const persistLoginSession = async (
   dispatch: ReturnType<typeof useAppDispatch>,
   response: LoginResponse
 ) => {
-  const { accessToken, user } = response;
+  const { accessToken, user } = response.data;
   await Promise.all([
     AsyncStorage.setItem('@user', JSON.stringify(user)),
     AsyncStorage.setItem('@token', accessToken),

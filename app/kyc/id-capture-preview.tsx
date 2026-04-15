@@ -1,7 +1,8 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { KycHeader, KycCard } from '@/shared/components/kyc'
 import Svg, { Path } from 'react-native-svg'
+import { Image } from 'expo-image'
 
 const CheckIcon = () => (
   <Svg width={16} height={16} viewBox="0 0 12 10" fill="none">
@@ -10,6 +11,8 @@ const CheckIcon = () => (
 )
 
 export default function IDCapturePreviewScreen() {
+  const { uri } = useLocalSearchParams<{ uri: string }>()
+
   return (
     <View className="flex-1 bg-[#00C897]">
       <KycHeader title="Take photo" showBar />
@@ -20,7 +23,10 @@ export default function IDCapturePreviewScreen() {
         >
           {/* Passport preview */}
           <View className="w-full h-[200px] bg-[#E8E8E8] rounded-2xl overflow-hidden mb-6 items-center justify-center">
-            <Text className="text-[#AAA] text-[13px]">Captured ID Photo</Text>
+            {uri
+              ? <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+              : <Text className="text-[#AAA] text-[13px]">Captured ID Photo</Text>
+            }
           </View>
 
           <Text className="text-[16px] font-bold text-[#1A1A1A] mb-3">After detected, you photo</Text>

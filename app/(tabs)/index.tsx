@@ -8,11 +8,12 @@ import {
   PanResponder,
   Dimensions,
 } from 'react-native';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { NotificationIcon, RoundBDTIcon, BankAccountIcon } from '@/shared/constants/icons';
+import { useBiometricStatus } from '@/modules/home/hooks/useHome';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.44;
@@ -120,6 +121,44 @@ export default function HomeScreen() {
   const [activeAccount, setActiveAccount] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
+  const { biometricStatus, isLoading: bioLoading, fetchStatus } = useBiometricStatus();
+
+  // Fetch biometric status on mount
+  useEffect(() => {
+    fetchStatus();
+  }, []);
+
+  // Check if verification is needed
+  const needsVerification =
+    !bioLoading &&
+    biometricStatus &&
+    (!biometricStatus.idVerified ||
+      !biometricStatus.addressVerified ||
+      !biometricStatus.faceVerified);
+
+  // Get the next verification step
+  const getNextVerificationRoute = () => {
+    if (!biometricStatus) return null;
+
+    // Check in order: ID → Address → Face
+    if (!biometricStatus.idVerified) {
+      return '/kyc/select-id-type';
+    }
+    if (!biometricStatus.addressVerified) {
+      return '/kyc/address-roles';
+    }
+    if (!biometricStatus.faceVerified) {
+      return '/kyc/facial-recognition';
+    }
+    return null;
+  };
+
+  const handleVerifyPress = () => {
+    const route = getNextVerificationRoute();
+    if (route) {
+      router.push(route as any);
+    }
+  };
 
   const openSheet = () => {
     setSheetVisible(true);
@@ -151,6 +190,8 @@ export default function HomeScreen() {
       },
     })
   ).current;
+
+  console.log('biometricStatus', biometricStatus);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#00C897' }}>
@@ -227,6 +268,32 @@ export default function HomeScreen() {
       {/* ── WHITE CARD ───────────────────────────────────────────── */}
       <View className="flex-1 rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4] px-4 pt-6">
         <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Verification Banner - Show if any verification is needed */}
+          {needsVerification && (
+            <View className="mb-4 rounded-2xl bg-gradient-to-r from-[#FFF8E1] to-[#FFE8B8] p-4 shadow-sm">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1">
+                  <Text className="mb-1 text-[15px] font-bold text-[#1A1A1A]">
+                    Complete Your Verification
+                  </Text>
+                  <Text className="text-[13px] text-[#666]">
+                    {(!biometricStatus?.idVerified && 'Verify your ID to continue') ||
+                      (!biometricStatus?.addressVerified && 'Verify your address to continue') ||
+                      (!biometricStatus?.faceVerified &&
+                        'Complete facial recognition to continue') ||
+                      'Complete verification to access all features'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleVerifyPress}
+                  activeOpacity={0.8}
+                  className="ml-3 h-[44px] items-center justify-center rounded-full bg-[#00C897] px-5">
+                  <Text className="text-[14px] font-bold text-white">Verify</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
           {/* Loan Goals + Next Payment */}
           <View className="mb-4 flex-row items-stretch rounded-[22px] bg-[#00C897] p-4">
             {/* Left — Circular gauge */}

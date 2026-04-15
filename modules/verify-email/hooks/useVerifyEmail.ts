@@ -5,17 +5,17 @@ import {
   useResendOtpMutation,
 } from '@/shared/libs/redux/features/auth/authApi';
 
-export const useVerifyEmail = (userId: string) => {
+export const useVerifyEmail = (email: string) => {
   const [verifyMutation, { isLoading: isVerifying }] = useVerifyEmailMutation();
   const [resendMutation, { isLoading: isResending }] = useResendOtpMutation();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const verify = async (otp: string) => {
+  const verify = async (email: string, otp: string) => {
     setError(null);
     try {
-      await verifyMutation({ userId, otp }).unwrap();
+      await verifyMutation({ email, otp }).unwrap();
       router.replace('/auth/basic-information' as any);
     } catch (err: any) {
       const msg = err?.data?.message ?? 'Verification failed. Please try again.';
@@ -27,7 +27,7 @@ export const useVerifyEmail = (userId: string) => {
     setError(null);
     setResendSuccess(false);
     try {
-      await resendMutation({ userId }).unwrap();
+      await resendMutation({ email }).unwrap();
       setResendSuccess(true);
     } catch (err: any) {
       const msg = err?.data?.message ?? 'Failed to resend OTP. Please try again.';

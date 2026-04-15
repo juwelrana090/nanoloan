@@ -1,17 +1,23 @@
 import { apiSlice } from '@/shared/libs/redux/apiSlice';
 import type {
+  AddAddressRequest,
+  ApiSuccessResponse,
   ChangePasswordRequest,
   CheckAvailabilityResponse,
+  DeleteAccountRequest,
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
+  RegisterFingerprintRequest,
   RegisterRequest,
   RegisterResponse,
   ResendOtpRequest,
   ResetPasswordRequest,
+  UpdateAddressRequest,
   UpdateBasicInfoRequest,
   UpdateProfileRequest,
   UserProfile,
+  Address,
   VerifyEmailRequest,
   VerifyResetOtpRequest,
 } from '@/shared/libs/types/auth.types';
@@ -81,14 +87,14 @@ export const authApi = apiSlice.injectEndpoints({
         params: { username },
       }),
     }),
-    getMe: builder.query<UserProfile, void>({
+    getMe: builder.query<ApiSuccessResponse<UserProfile>, void>({
       query: () => ({
         url: '/users/me',
         method: 'GET',
       }),
       providesTags: ['user'],
     }),
-    updateProfile: builder.mutation<UserProfile, UpdateProfileRequest>({
+    updateProfile: builder.mutation<ApiSuccessResponse<UserProfile>, UpdateProfileRequest>({
       query: (data) => ({
         url: '/users/me',
         method: 'PUT',
@@ -96,18 +102,64 @@ export const authApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['user'],
     }),
-    updateBasicInfo: builder.mutation<void, UpdateBasicInfoRequest>({
+    updateBasicInfo: builder.mutation<ApiSuccessResponse<UserProfile>, UpdateBasicInfoRequest>({
       query: (data) => ({
         url: '/users/me/basic-info',
         method: 'PUT',
         body: data,
       }),
+      invalidatesTags: ['user'],
     }),
-    changePassword: builder.mutation<void, ChangePasswordRequest>({
+    changePassword: builder.mutation<ApiSuccessResponse<{ message: string }>, ChangePasswordRequest>({
       query: (data) => ({
         url: '/users/me/change-password',
         method: 'PUT',
         body: data,
+      }),
+    }),
+    deleteAccount: builder.mutation<ApiSuccessResponse<{ message: string }>, DeleteAccountRequest>({
+      query: (data) => ({
+        url: '/users/me',
+        method: 'DELETE',
+        body: data,
+      }),
+    }),
+    // ─── Address Management ────────────────────────────────────────────────────────
+    getAddresses: builder.query<ApiSuccessResponse<Address[]>, void>({
+      query: () => ({
+        url: '/users/me/addresses',
+        method: 'GET',
+      }),
+      providesTags: ['user'],
+    }),
+    addAddress: builder.mutation<ApiSuccessResponse<Address>, AddAddressRequest>({
+      query: (data) => ({
+        url: '/users/me/addresses',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['user'],
+    }),
+    updateAddress: builder.mutation<ApiSuccessResponse<Address>, { id: string; data: UpdateAddressRequest }>({
+      query: ({ id, data }) => ({
+        url: `/users/me/addresses/${id}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: ['user'],
+    }),
+    // ─── Fingerprint Management ───────────────────────────────────────────────────
+    registerFingerprint: builder.mutation<ApiSuccessResponse<{ message: string }>, RegisterFingerprintRequest>({
+      query: (data) => ({
+        url: '/users/me/fingerprint',
+        method: 'POST',
+        body: data,
+      }),
+    }),
+    deleteFingerprint: builder.mutation<ApiSuccessResponse<{ message: string }>, void>({
+      query: () => ({
+        url: '/users/me/fingerprint',
+        method: 'DELETE',
       }),
     }),
   }),
@@ -130,4 +182,11 @@ export const {
   useUpdateProfileMutation,
   useUpdateBasicInfoMutation,
   useChangePasswordMutation,
+  useDeleteAccountMutation,
+  useGetAddressesQuery,
+  useLazyGetAddressesQuery,
+  useAddAddressMutation,
+  useUpdateAddressMutation,
+  useRegisterFingerprintMutation,
+  useDeleteFingerprintMutation,
 } = authApi;
