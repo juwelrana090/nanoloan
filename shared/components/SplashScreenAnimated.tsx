@@ -230,7 +230,7 @@ export default function SplashScreenAnimated() {
         </Animated.View>
 
         {/* App name */}
-        <Animated.Text style={[styles.title, titleStyle]}>NanoLoan</Animated.Text>
+        <Animated.Text style={[styles.title, titleStyle]}>NANO LOAN</Animated.Text>
 
         {/* Tagline */}
         <Animated.Text style={[styles.tagline, tagStyle]}>Fast · Secure · Flexible</Animated.Text>
