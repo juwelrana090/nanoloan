@@ -7,4 +7,15 @@ const { withNativeWind } = require('nativewind/metro');
 
 const config = getDefaultConfig(__dirname);
 
+// Add path alias support
+config.resolver = {
+  ...config.resolver,
+  alias: {
+    '@': '.',
+    '@/components': './shared/components',
+    '@/shared': './shared',
+    '@/app': './app',
+  },
+};
+
 module.exports = withNativeWind(config, { input: './global.css' });

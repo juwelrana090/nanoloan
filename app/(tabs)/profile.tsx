@@ -1,99 +1,305 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path } from 'react-native-svg';
-import { router } from 'expo-router';
-
-const ComingSoonIcon = () => (
-  <Svg width={120} height={120} viewBox="0 0 24 24" fill="none">
-    <Circle cx={12} cy={8} r={4} stroke="#00C897" strokeWidth={1.5} />
-    <Path
-      d="M6 21V18C6 16.3431 7.34315 15 9 15H15C16.6569 15 18 16.3431 18 18V21"
-      stroke="#00C897"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-    />
-    <Path
-      d="M9 11C9.55228 11 10 10.5523 10 10C10 9.44772 9.55228 9 9 9C8.44772 9 8 9.44772 8 10C8 10.5523 8.44772 11 9 11ZM15 11C15.5523 11 16 10.5523 16 10C16 9.44772 15.5523 9 15 9C14.4477 9 14 9.44772 14 10C14 10.5523 14.4477 11 15 11Z"
-      fill="#00C897"
-    />
-  </Svg>
-);
+import { useRouter } from 'expo-router';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
+import { setLogout } from '@/shared/libs/redux/features/auth/authSlice';
+import { useState } from 'react';
+import {
+  ProfileIcon,
+  SecurityIcon,
+  SettingsIcon,
+  KyCIcon,
+  HelpIcon,
+  LogoutIcon,
+  BackIcon,
+  BellIcon,
+} from '@/components/UI/icons/svg-icons';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoggingOut(true);
+            try {
+              dispatch(setLogout());
+              router.replace('/auth/login' as any);
+            } catch {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const menuItems = [
+    {
+      id: 'edit-profile',
+      title: 'Edit Profile',
+      icon: <ProfileIcon />,
+      color: '#6DB6FE',
+      onPress: () => router.push('/auth/basic-information' as any),
+    },
+    {
+      id: 'security',
+      title: 'Security',
+      icon: <SecurityIcon />,
+      color: '#3299FF',
+      onPress: () => {},
+    },
+    {
+      id: 'settings',
+      title: 'Setting',
+      icon: <SettingsIcon />,
+      color: '#0068FF',
+      onPress: () => {},
+    },
+    {
+      id: 'ekyc',
+      title: 'E-KYC',
+      icon: <KyCIcon />,
+      color: '#0068FF',
+      onPress: () => {},
+    },
+    {
+      id: 'help',
+      title: 'Help',
+      icon: <HelpIcon />,
+      color: '#6DB6FE',
+      onPress: () => {},
+    },
+    {
+      id: 'debug-network',
+      title: '🔧 Debug Network',
+      icon: <SettingsIcon />,
+      color: '#FF6B6B',
+      onPress: () => router.push('/debug-network' as any),
+    },
+  ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#00C897' }}>
-      <View style={{ paddingTop: insets.top }} className="px-5 pb-4">
-        <Text className="text-[22px] font-extrabold text-[#0D2B1E]">Profile</Text>
-        <Text className="text-[13px] text-[#0D2B1E]/70">Manage your account</Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#00D09E' }}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View
+          style={{
+            paddingTop: insets.top + 20,
+            paddingHorizontal: 38,
+            paddingBottom: 20,
+          }}
+        >
+          {/* Top Row */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <TouchableOpacity onPress={() => router.back()}>
+              <BackIcon />
+            </TouchableOpacity>
+            <View
+              style={{
+                backgroundColor: '#DFF7E2',
+                borderRadius: 25.7,
+                width: 30,
+                height: 30,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <BellIcon />
+            </View>
+          </View>
 
-      <View className="flex-1 rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4] px-5 pt-6">
-        <ComingSoonIcon />
-        <Text className="mt-6 text-center text-[18px] font-bold text-[#1A1A1A]">Profile</Text>
-        <Text className="mt-2 text-center text-[14px] text-[#888]">
-          We are working on something amazing{'\n'}for you. Stay tuned!
-        </Text>
+          {/* Title */}
+          <View
+            style={{
+              marginTop: 20,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: 'Poppins-Bold',
+                fontSize: 20,
+                color: '#0E3E3E',
+                textTransform: 'capitalize',
+              }}
+            >
+              Profile
+            </Text>
+          </View>
 
-        {/* Quick actions */}
-        <View className="mt-8 space-y-3">
-          <TouchableOpacity
-            onPress={() => router.push('/auth/basic-information')}
-            activeOpacity={0.8}
-            className="h-[52px] items-center justify-between rounded-2xl bg-white px-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A]">Basic Information</Text>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M9 5L7 8H5C3.89543 8 3 8.89543 3 10V11"
-                stroke="#888"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
-          </TouchableOpacity>
+          {/* Profile Avatar */}
+          <View
+            style={{
+              marginTop: 10,
+              alignItems: 'center',
+            }}
+          >
+            <View
+              style={{
+                width: 117,
+                height: 117,
+                borderRadius: 58.5,
+                backgroundColor: '#C5F0DC',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 20,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: 'Poppins-Bold',
+                  fontSize: 48,
+                  color: '#00D09E',
+                }}
+              >
+                {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            </View>
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            className="h-[52px] items-center justify-between rounded-2xl bg-white px-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A]">Security Settings</Text>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                stroke="#888"
-                strokeWidth={2}
-              />
-              <Path d="M12 8V12" stroke="#888" strokeWidth={2} strokeLinecap="round" />
-              <Path d="M12 16H12.01" stroke="#888" strokeWidth={2} strokeLinecap="round" />
-            </Svg>
-          </TouchableOpacity>
+            {/* User Name */}
+            <Text
+              style={{
+                fontFamily: 'Poppins-Bold',
+                fontSize: 20,
+                color: '#0E3E3E',
+                textTransform: 'capitalize',
+              }}
+            >
+              {user?.fullName || 'User Name'}
+            </Text>
 
-          <TouchableOpacity
-            activeOpacity={0.8}
-            className="h-[52px] items-center justify-between rounded-2xl bg-white px-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A]">Notifications</Text>
-            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-              <Path
-                d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8"
-                stroke="#888"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <Path
-                d="M6 8C6 11.3137 8.68629 14 12 14"
-                stroke="#888"
-                strokeWidth={2}
-                strokeLinecap="round"
-              />
-              <Circle cx={18} cy={8} r={2} fill="#00C897" />
-            </Svg>
-          </TouchableOpacity>
+            {/* User ID */}
+            <Text
+              style={{
+                fontFamily: 'Poppins-SemiBold',
+                fontSize: 13,
+                color: '#093030',
+                marginTop: 4,
+              }}
+            >
+              ID:{' '}
+              <Text
+                style={{
+                  fontFamily: 'Poppins-Light',
+                }}
+              >
+                {user?.id || 'N/A'}
+              </Text>
+            </Text>
+          </View>
         </View>
 
-        <View className="h-10" />
-      </View>
+        {/* Menu Items */}
+        <View
+          style={{
+            backgroundColor: '#F0FFF4',
+            borderTopLeftRadius: 70,
+            borderTopRightRadius: 70,
+            paddingHorizontal: 38,
+            paddingTop: 80,
+            paddingBottom: 40,
+            minHeight: 600,
+          }}
+        >
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={item.id}
+              onPress={item.onPress}
+              activeOpacity={0.7}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: index === menuItems.length - 1 ? 0 : 35,
+              }}
+            >
+              <View
+                style={{
+                  width: 57,
+                  height: 53,
+                  borderRadius: 22,
+                  backgroundColor: item.color,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {item.icon}
+              </View>
+              <Text
+                style={{
+                  fontFamily: 'Poppins-Medium',
+                  fontSize: 15,
+                  color: '#093030',
+                  marginLeft: 13,
+                  textTransform: 'capitalize',
+                }}
+              >
+                {item.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          {/* Logout Button */}
+          <TouchableOpacity
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+            activeOpacity={0.7}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: 35,
+              opacity: isLoggingOut ? 0.5 : 1,
+            }}
+          >
+            <View
+              style={{
+                width: 57,
+                height: 53,
+                borderRadius: 22,
+                backgroundColor: '#3299FF',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <LogoutIcon />
+            </View>
+            <Text
+              style={{
+                fontFamily: 'Poppins-Medium',
+                fontSize: 15,
+                color: '#093030',
+                marginLeft: 13,
+                textTransform: 'capitalize',
+              }}
+            >
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 }

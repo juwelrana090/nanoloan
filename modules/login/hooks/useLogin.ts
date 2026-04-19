@@ -31,6 +31,7 @@ export const useLogin = () => {
   const [error, setError] = useState<string | null>(null);
 
   const login = async (data: LoginRequest) => {
+    console.log('login data :::', data);
     setError(null);
     try {
       const response = await loginMutation(data).unwrap();

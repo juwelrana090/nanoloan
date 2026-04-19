@@ -14,43 +14,91 @@ const STORAGE_KEYS = {
 const baseQuery = fetchBaseQuery({
     baseUrl: `${apiUrl}/v1`,
     prepareHeaders: async (headers, { getState }) => {
-        const state: RootState = getState() as RootState;
-        const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN) || state.auth.token;
-        headers.delete('Content-Type');
-        headers.set('Accept', 'application/json');
-        if (token) {
-            headers.set('Authorization', `Bearer ${token}`);
+        try {
+            const state: RootState = getState() as RootState;
+            const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN) || state.auth.token;
+
+            console.log('🔍 API Request Debug:');
+            console.log('Base URL:', `${apiUrl}/v1`);
+            console.log('Token present:', !!token);
+
+            headers.delete('Content-Type');
+            headers.set('Accept', 'application/json');
+            headers.set('Content-Type', 'application/json');
+
+            if (token) {
+                headers.set('Authorization', `Bearer ${token}`);
+            }
+
+            return headers;
+        } catch (error) {
+            console.error('❌ Error in prepareHeaders:', error);
+            return headers;
         }
-        return headers;
     }
 });
 
 const baseQueryWithAutoLogout = async (args: any, api: any, extraOptions: any) => {
-    const result = await baseQuery(args, api, extraOptions);
+    console.log('🚀 Making API Request:', {
+        url: typeof args === 'string' ? args : args.url,
+        method: typeof args === 'string' ? 'GET' : args.method,
+        baseUrl: `${apiUrl}/v1`
+    });
 
-    // Check for 401 Unauthorized status
-    if (result.error && result.error.status === 401) {
-        console.log('🔒 Unauthorized access detected (401). Auto-logging out user...');
-        console.log('API Error:', JSON.stringify(result.error, null, 2));
+    try {
+        const result = await baseQuery(args, api, extraOptions);
 
-        try {
-            // Clear AsyncStorage
-            await AsyncStorage.multiRemove([
-                STORAGE_KEYS.USER,
-                STORAGE_KEYS.TOKEN,
-                STORAGE_KEYS.DEVICE_TOKEN
-            ]);
-            console.log('✅ AsyncStorage cleared');
+        console.log('📥 API Response:', {
+            success: !result.error,
+            status: result.error?.status,
+            data: result.data ? 'Data received' : 'No data'
+        });
 
-            // Dispatch logout action to clear Redux state
-            api.dispatch(setLogout());
-            console.log('✅ Redux state cleared');
-        } catch (error) {
-            console.error('❌ Error during auto-logout:', error);
+        // Check for 401 Unauthorized status
+        if (result.error && result.error.status === 401) {
+            console.log('🔒 Unauthorized access detected (401). Auto-logging out user...');
+            console.log('API Error:', JSON.stringify(result.error, null, 2));
+
+            try {
+                // Clear AsyncStorage
+                await AsyncStorage.multiRemove([
+                    STORAGE_KEYS.USER,
+                    STORAGE_KEYS.TOKEN,
+                    STORAGE_KEYS.DEVICE_TOKEN
+                ]);
+                console.log('✅ AsyncStorage cleared');
+
+                // Dispatch logout action to clear Redux state
+                api.dispatch(setLogout());
+                console.log('✅ Redux state cleared');
+            } catch (error) {
+                console.error('❌ Error during auto-logout:', error);
+            }
         }
-    }
 
-    return result;
+        // Log other errors
+        if (result.error && result.error.status !== 401) {
+            console.error('❌ API Error:', {
+                status: result.error.status,
+                data: result.error.data,
+                message: result.error.data?.message || result.error.status
+            });
+        }
+
+        return result;
+    } catch (error: any) {
+        console.error('💥 Unexpected API Error:', {
+            message: error.message,
+            stack: error.stack,
+            args: typeof args === 'string' ? args : args.url
+        });
+        return {
+            error: {
+                status: 'CUSTOM_ERROR',
+                data: { message: error.message || 'Network request failed' }
+            }
+        };
+    }
 };
 
 export const apiSlice = createApi({
