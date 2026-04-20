@@ -6,11 +6,11 @@ import {
   Dimensions,
   PanResponder,
   Animated,
+  Image as RNImage,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Image } from 'expo-image';
-import { Image as RNImage } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useDispatch } from 'react-redux';
