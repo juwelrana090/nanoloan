@@ -1,82 +1,128 @@
-import { View, Text, TouchableOpacity, Dimensions } from 'react-native'
-import { router } from 'expo-router'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Svg, { Path, Circle, Line } from 'react-native-svg'
-
-const { width, height } = Dimensions.get('window')
-
-const FlashOffIcon = () => (
-  <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
-    <Path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    <Line x1="2" y1="2" x2="22" y2="22" stroke="white" strokeWidth={2} strokeLinecap="round" />
-  </Svg>
-)
-
-const CameraReverseIcon = () => (
-  <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
-    <Path d="M20 10C20 10 19.58 10 19 10" stroke="white" strokeWidth={2} strokeLinecap="round" />
-    <Path d="M16.2 7.8C16.7 7.3 17.5 7 18.4 7C19.3 7 20 7.5 20.5 8" stroke="white" strokeWidth={2} strokeLinecap="round" />
-    <Path d="M20 14C20 14 19.58 14 19 14" stroke="white" strokeWidth={2} strokeLinecap="round" />
-    <Path d="M20 12C20 12 19.58 12 19 12" stroke="white" strokeWidth={2} strokeLinecap="round" />
-    <Path d="M23 12C23 16 21 19 18 21M16.2 16.2C16.7 16.7 17.5 17 18.4 17C19.3 17 20 16.5 20.5 16" stroke="white" strokeWidth={2} strokeLinecap="round" />
-    <Circle cx={10} cy={10} r={6} stroke="white" strokeWidth={2} />
-    <Circle cx={10} cy={10} r={2} fill="white" />
-    <Path d="M18 10L20 8" stroke="white" strokeWidth={2} strokeLinecap="round" />
-    <Path d="M20 14L18 12" stroke="white" strokeWidth={2} strokeLinecap="round" />
-  </Svg>
-)
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useRef, useState } from 'react';
+import { FlashOffIcon, FlashOnIcon, CameraReverseIcon } from '@/shared/components/UI/icons/svg-icons';
 
 export default function AddressCaptureScreen() {
-  const insets = useSafeAreaInsets()
+  const insets = useSafeAreaInsets();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [capturing, setCapturing] = useState(false);
+  const [facing, setFacing] = useState<'back' | 'front'>('back');
+  const [flash, setFlash] = useState<'off' | 'on'>('off');
+  const cameraRef = useRef<CameraView>(null);
+
+  const handleCapture = async () => {
+    if (!cameraRef.current || capturing) return;
+    setCapturing(true);
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.9 });
+      if (photo?.uri) {
+        console.log('📸 Photo captured:', {
+          uri: photo.uri,
+          width: photo.width,
+          height: photo.height,
+        });
+
+        // Navigate to crop screen
+        router.push({
+          pathname: '/kyc/address-capture-crop',
+          params: { uri: photo.uri },
+        });
+      }
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  const toggleFacing = () => setFacing((f) => (f === 'back' ? 'front' : 'back'));
+
+  const toggleFlash = () => setFlash((f) => (f === 'off' ? 'on' : 'off'));
+
+  if (!permission) return <View className="flex-1 bg-black" />;
+
+  if (!permission.granted) {
+    return (
+      <View className="flex-1 items-center justify-center bg-black px-8">
+        <Text className="mb-6 text-center text-[16px] text-white">
+          Camera access is required to capture your proof of address document.
+        </Text>
+        <TouchableOpacity
+          onPress={requestPermission}
+          activeOpacity={0.8}
+          className="h-[50px] items-center justify-center rounded-full bg-[#25d17f] px-8">
+          <Text className="text-[16px] font-bold text-white">Grant Permission</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-black">
-      {/* Simulated camera bg */}
-      <View className="absolute inset-0 bg-[#2A2A2A] opacity-80" />
+      {/* Full-screen live camera */}
+      <CameraView
+        ref={cameraRef}
+        style={StyleSheet.absoluteFillObject}
+        facing={facing}
+        enableTorch={flash === 'on'}
+        flash={flash === 'on' ? 'on' : 'off'}
+      />
 
-      {/* Top bar */}
+      {/* Top bar - simplified with minimal elements */}
       <View
-        style={{ paddingTop: insets.top + 12 }}
-        className="absolute top-0 left-0 right-0 flex-row justify-between px-6 z-10"
-      >
-        <View className="w-8" />
-        <View className="w-8 h-1 bg-white/50 rounded-full self-center" />
-        <View className="flex-row gap-5">
-          <FlashOffIcon />
-          <CameraReverseIcon />
+        style={{ paddingTop: insets.top + 8 }}
+        className="absolute left-0 right-0 top-0 z-10 flex-row justify-between px-6">
+        <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+          <View className="h-8 w-8 items-center justify-center">
+            <Text className="text-[20px] font-bold text-white">←</Text>
+          </View>
+        </TouchableOpacity>
+        <View className="flex-row gap-4">
+          <TouchableOpacity
+            onPress={toggleFlash}
+            activeOpacity={0.7}
+            className="h-8 w-8 items-center justify-center">
+            {flash === 'on' ? <FlashOnIcon /> : <FlashOffIcon />}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={toggleFacing}
+            activeOpacity={0.7}
+            className="h-8 w-8 items-center justify-center">
+            <CameraReverseIcon />
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Instruction */}
-      <View className="absolute top-[120px] left-6 right-6 z-10">
-        <Text className="text-white text-[20px] font-bold leading-7">
+      <View className="absolute left-6 right-6 z-10" style={{ top: 120 }}>
+        <Text className="text-left text-[24px] leading-[31px] text-white">
           Place the{' '}
-          <Text className="text-[#00C897]">Proof of Address Document{'\n'}</Text>
-          in the frame
+          <Text className="text-[24px] font-semibold text-[#25d17f]">Proof of Address Document</Text>
+          {' in the frame'}
         </Text>
       </View>
 
-      {/* Frame overlay */}
-      <View
-        className="absolute z-10 border-2 border-white rounded-lg"
-        style={{
-          width: width - 48,
-          height: height * 0.32,
-          left: 24,
-          top: height * 0.28,
-        }}
-      />
-
       {/* Shutter button */}
-      <View className="absolute bottom-16 left-0 right-0 items-center z-10">
+      <View className="absolute bottom-20 left-0 right-0 z-10 items-center">
         <TouchableOpacity
-          onPress={() => router.push('/kyc/address-capture-preview')}
+          onPress={handleCapture}
+          disabled={capturing}
           activeOpacity={0.8}
-          className="w-[72px] h-[72px] rounded-full border-4 border-white items-center justify-center"
-        >
-          <View className="w-[54px] h-[54px] rounded-full bg-white" />
+          className="border-3 h-[68px] w-[68px] items-center justify-center rounded-full border-white bg-white/10 backdrop-blur-sm">
+          {capturing ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <View className="h-[56px] w-[56px] rounded-full bg-white shadow-lg" />
+          )}
         </TouchableOpacity>
       </View>
     </View>
-  )
+  );
 }

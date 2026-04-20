@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { FlashOffIcon, FlashOnIcon, CameraReverseIcon } from '@/shared/components/UI/icons/svg-icons';
+import { cropImageToFrame, getPhotoDimensions } from '@/utils/cropToFrame';
 
 const { width } = Dimensions.get('window');
 
@@ -28,13 +29,61 @@ export default function IDCaptureScreen() {
   const [flash, setFlash] = useState<'off' | 'on'>('off');
   const cameraRef = useRef<CameraView>(null);
 
+  // Log frame configuration on mount
+  console.log('🎯 Frame Configuration:', {
+    FRAME_WIDTH,
+    FRAME_HEIGHT,
+    FRAME_TOP,
+    FRAME_LEFT,
+    screenWidth: width,
+    safeAreaTop: insets.top,
+  });
+
   const handleCapture = async () => {
     if (!cameraRef.current || capturing) return;
     setCapturing(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.9 });
       if (photo?.uri) {
-        router.push({ pathname: '/kyc/id-capture-preview', params: { uri: photo.uri, side } });
+        console.log('📸 Photo captured:', {
+          uri: photo.uri,
+          width: photo.width,
+          height: photo.height,
+        });
+
+        // Crop to frame area only
+        const dimensions = getPhotoDimensions(photo);
+        console.log('📏 Photo dimensions:', dimensions);
+
+        const cropResult = await cropImageToFrame(
+          photo.uri,
+          {
+            frameWidth: FRAME_WIDTH,
+            frameHeight: FRAME_HEIGHT,
+            frameLeft: FRAME_LEFT,
+            frameTop: FRAME_TOP,
+          },
+          dimensions.width,
+          dimensions.height
+        );
+
+        console.log('✂️ Crop result:', cropResult);
+
+        if (cropResult.success && cropResult.uri) {
+          // Navigate with cropped image
+          console.log('✅ Using cropped image:', cropResult.uri);
+          router.push({
+            pathname: '/kyc/id-capture-preview',
+            params: { uri: cropResult.uri, side },
+          });
+        } else {
+          // Fall back to original photo if crop fails
+          console.warn('⚠️ Crop failed, using original photo:', cropResult.error);
+          router.push({
+            pathname: '/kyc/id-capture-preview',
+            params: { uri: photo.uri, side },
+          });
+        }
       }
     } finally {
       setCapturing(false);

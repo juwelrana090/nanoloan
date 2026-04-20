@@ -1,46 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export type DocumentType = 'NID' | 'PASSPORT' | 'UNKNOWN';
-
-export interface ValidationError {
-  field: string;
-  message: string;
-  isCritical: boolean;
-}
-
-export interface ExtractedData {
-  documentType?: DocumentType;
-  name?: string;
-  idNumber?: string;
-  passportNumber?: string;
-  personalNumber?: string;
-  expiryDate?: string;
-  dob?: string;
-  placeOfBirth?: string;
-  dateOfIssue?: string;
-  nationality?: string;
-  sex?: string;
-  // NID Back side specific fields
-  fatherName?: string;
-  motherName?: string;
-  spouseName?: string;
-  presentAddress?: string;
-  permanentAddress?: string;
-  bloodGroup?: string;
-  district?: string;
-  // Passport Back side specific fields
-  emergencyContact?: string;
-  address?: string;
-  observations?: string;
-  fileNumber?: string;
-  rawText: string;
-  validationErrors?: ValidationError[];
-}
+import { DocumentType, ValidationError, ExtractedData } from '@/types/kyc';
 
 export interface KYCState {
   documentType: DocumentType | null;
   frontImageUri: string | null;
   backImageUri: string | null;
+  addressImageUri: string | null;
   frontData: ExtractedData | null;
   backData: ExtractedData | null;
   currentStep: string;
@@ -52,6 +17,7 @@ const initialState: KYCState = {
   documentType: null,
   frontImageUri: null,
   backImageUri: null,
+  addressImageUri: null,
   frontData: null,
   backData: null,
   currentStep: 'select-id-type',
@@ -93,6 +59,14 @@ const kycSlice = createSlice({
       state.backData = null;
     },
 
+    setAddressImage: (state, action: PayloadAction<string>) => {
+      state.addressImageUri = action.payload;
+    },
+
+    clearAddressImage: (state) => {
+      state.addressImageUri = null;
+    },
+
     setCurrentStep: (state, action: PayloadAction<string>) => {
       state.currentStep = action.payload;
     },
@@ -113,10 +87,12 @@ export const {
   setDocumentType,
   setFrontImage,
   setBackImage,
+  setAddressImage,
   setFrontData,
   setBackData,
   clearFrontImage,
   clearBackImage,
+  clearAddressImage,
   setCurrentStep,
   setLoading,
   setError,

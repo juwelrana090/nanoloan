@@ -1,10 +1,12 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Svg, Path } from 'react-native-svg';
 import { router } from 'expo-router';
 import { KycHeader, KycCard } from '@/shared/components/kyc';
 import { IdCard, Passport, DriverLicense } from '@/shared/constants/images';
+import { useDispatch } from 'react-redux';
+import { resetKYC } from '@/shared/libs/redux/features/kyc/kycSlice';
 
 const CheckmarkIcon = () => (
   <View
@@ -34,7 +36,14 @@ const ID_TYPES = [
 ];
 
 export default function SelectIDTypeScreen() {
+  const dispatch = useDispatch();
   const [selected, setSelected] = useState('id_card');
+
+  useEffect(() => {
+    // Clear all old KYC data when starting fresh
+    dispatch(resetKYC());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <View className="flex-1 bg-[#00C897]">
