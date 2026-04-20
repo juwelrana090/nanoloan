@@ -7,7 +7,7 @@ import { SelectId } from '@/shared/constants/images';
 export default function IDPreviewRolesScreen() {
   return (
     <View className="flex-1 bg-[#00C897]">
-      <KycHeader title="Select ID Type" showBar />
+      <KycHeader title="Select ID Type" showBar currentStep={1} totalSteps={5} />
       <KycCard>
         <View className="flex-1 justify-between px-6 pb-10 pt-8">
           {/* ID Card Illustration */}

@@ -3,18 +3,20 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { persistReducer, persistStore } from 'redux-persist';
 import { apiSlice } from './apiSlice';
 import authReducer from './features/auth/authSlice';
+import kycReducer from './features/kyc/kycSlice';
 // import notificationReducer from './features/notification/notificationSlice';
 
 // Persist config
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth'], // Only persist auth state
+  whitelist: ['auth', 'kyc'], // Persist auth and KYC state
 };
 
 // Root reducer
 const rootReducer = combineReducers({
   auth: authReducer,
+  kyc: kycReducer,
   // notification: notificationReducer,
   [apiSlice.reducerPath]: apiSlice.reducer,
 });

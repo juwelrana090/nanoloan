@@ -7,15 +7,28 @@ import { KycHeader, KycCard } from '@/shared/components/kyc';
 import { IdCard, Passport, DriverLicense } from '@/shared/constants/images';
 
 const CheckmarkIcon = () => (
-  <View style={{ width: 16, height: 16, alignItems: 'center', justifyContent: 'center', marginLeft: 2 }}>
+  <View
+    style={{
+      width: 16,
+      height: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginLeft: 2,
+    }}>
     <Svg width={12} height={10} viewBox="0 0 12 10" fill="none">
-      <Path d="M1 5L4.5 8.5L11 1" stroke="white" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
+      <Path
+        d="M1 5L4.5 8.5L11 1"
+        stroke="white"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </Svg>
   </View>
 );
 
 const ID_TYPES = [
-  { id: 'id_card', label: 'ID card', image: IdCard },
+  { id: 'id_card', label: 'NID card', image: IdCard },
   { id: 'passport', label: 'Passport', image: Passport },
   // { id: 'drivers_license', label: "Driver's license", image: DriverLicense },
 ];
@@ -25,7 +38,7 @@ export default function SelectIDTypeScreen() {
 
   return (
     <View className="flex-1 bg-[#00C897]">
-      <KycHeader title="Select ID Type" showBar />
+      <KycHeader title="Select ID Type" showBar currentStep={1} totalSteps={5} />
       <KycCard>
         <View className="flex-1 px-6 pt-8">
           <Text className="mb-6 text-[15px] text-[#1A1A1A]">
@@ -44,7 +57,7 @@ export default function SelectIDTypeScreen() {
               <Text className="flex-1 text-[16px] font-semibold text-[#1A1A1A]">{item.label}</Text>
               <View
                 className={`h-6 w-6 items-center justify-center rounded-full ${
-                  selected === item.id ? 'bg-[#1A1A1A]' : 'bg-transparent border-2 border-[#CCC]'
+                  selected === item.id ? 'bg-[#1A1A1A]' : 'border-2 border-[#CCC] bg-transparent'
                 }`}>
                 {selected === item.id && <CheckmarkIcon />}
               </View>

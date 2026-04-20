@@ -12,7 +12,7 @@ const CheckIcon = () => (
 export default function AddressCapturePreviewScreen() {
   return (
     <View className="flex-1 bg-[#00C897]">
-      <KycHeader title="Take photo" showBar />
+      <KycHeader title="Take photo" showBar currentStep={4} totalSteps={5} />
       <KycCard>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}

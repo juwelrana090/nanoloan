@@ -13,7 +13,7 @@ const LocationIcon = () => (
 export default function AddressRolesScreen() {
   return (
     <View className="flex-1 bg-[#00C897]">
-      <KycHeader title="Address Verify" showBar />
+      <KycHeader title="Address Verify" showBar currentStep={4} totalSteps={5} />
       <KycCard>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}

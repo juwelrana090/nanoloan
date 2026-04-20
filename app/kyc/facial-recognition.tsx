@@ -67,7 +67,7 @@ const PersonOutlineIcon = () => (
 export default function FacialRecognitionScreen() {
   return (
     <View className="flex-1 bg-[#00C897]">
-      <KycHeader title="Facial recognition" showBar />
+      <KycHeader title="Facial recognition" showBar currentStep={5} totalSteps={5} />
       <KycCard>
         <View className="flex-1 justify-between px-6 pb-10 pt-8">
           <View className="items-center">

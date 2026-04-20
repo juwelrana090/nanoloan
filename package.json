@@ -28,6 +28,7 @@
     "@react-native-firebase/app": "^23.8.6",
     "@react-native-firebase/firestore": "^23.8.6",
     "@react-native-firebase/messaging": "^23.8.6",
+    "@react-native-ml-kit/text-recognition": "^2.0.0",
     "@react-native-vector-icons/evil-icons": "^12.4.2",
     "@react-native-vector-icons/fontawesome": "^12.4.2",
     "@react-native-vector-icons/fontawesome6": "^12.3.2",
