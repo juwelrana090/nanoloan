@@ -1,10 +1,22 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useState, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useUpdateBasicInfoMutation, useUpdateProfileMutation, useLazyGetMeQuery } from '@/shared/libs/redux/features/auth/authApi';
+import {
+  useUpdateBasicInfoMutation,
+  useUpdateProfileMutation,
+  useLazyGetMeQuery,
+} from '@/shared/libs/redux/features/auth/authApi';
 import { useToast } from '@/shared/hooks/useToast';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useAppSelector } from '@/shared/hooks/useAppSelector';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
@@ -13,26 +25,29 @@ const EDUCATION_OPTIONS = ['Primary', 'Secondary', 'Diploma', 'Bachelor', 'Maste
 
 // Reverse mapping for API values to UI values
 const genderMapReverse: Record<string, 'Male' | 'Female' | 'Other'> = {
-  'MALE': 'Male',
-  'FEMALE': 'Female',
-  'OTHER': 'Other',
+  MALE: 'Male',
+  FEMALE: 'Female',
+  OTHER: 'Other',
 };
 
 const maritalMapReverse: Record<string, 'Single' | 'Married' | 'Divorced' | 'Widowed'> = {
-  'SINGLE': 'Single',
-  'MARRIED': 'Married',
-  'DIVORCED': 'Divorced',
-  'WIDOWED': 'Widowed',
+  SINGLE: 'Single',
+  MARRIED: 'Married',
+  DIVORCED: 'Divorced',
+  WIDOWED: 'Widowed',
 };
 
-const educationMapReverse: Record<string, 'Primary' | 'Secondary' | 'Diploma' | 'Bachelor' | 'Master' | 'PhD'> = {
-  'PRIMARY': 'Primary',
-  'SECONDARY': 'Secondary',
-  'DIPLOMA': 'Diploma',
-  'BACHELOR': 'Bachelor',
-  'MASTER': 'Master',
-  'PHD': 'PhD',
-  'OTHER': 'Primary',
+const educationMapReverse: Record<
+  string,
+  'Primary' | 'Secondary' | 'Diploma' | 'Bachelor' | 'Master' | 'PhD'
+> = {
+  PRIMARY: 'Primary',
+  SECONDARY: 'Secondary',
+  DIPLOMA: 'Diploma',
+  BACHELOR: 'Bachelor',
+  MASTER: 'Master',
+  PHD: 'PhD',
+  OTHER: 'Primary',
 };
 
 interface DropdownProps {
@@ -203,33 +218,39 @@ export default function BasicInformationScreen() {
     try {
       // Map form values to API enum values
       const genderMap: Record<string, 'MALE' | 'FEMALE' | 'OTHER'> = {
-        'Male': 'MALE',
-        'Female': 'FEMALE',
-        'Other': 'OTHER',
+        Male: 'MALE',
+        Female: 'FEMALE',
+        Other: 'OTHER',
       };
 
       const maritalMap: Record<string, 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED'> = {
-        'Single': 'SINGLE',
-        'Married': 'MARRIED',
-        'Divorced': 'DIVORCED',
-        'Widowed': 'WIDOWED',
+        Single: 'SINGLE',
+        Married: 'MARRIED',
+        Divorced: 'DIVORCED',
+        Widowed: 'WIDOWED',
       };
 
-      const educationMap: Record<string, 'PRIMARY' | 'SECONDARY' | 'DIPLOMA' | 'BACHELOR' | 'MASTER' | 'PHD' | 'OTHER'> = {
-        'Primary': 'PRIMARY',
-        'Secondary': 'SECONDARY',
-        'Diploma': 'DIPLOMA',
-        'Bachelor': 'BACHELOR',
-        'Master': 'MASTER',
-        'PhD': 'PHD',
+      const educationMap: Record<
+        string,
+        'PRIMARY' | 'SECONDARY' | 'DIPLOMA' | 'BACHELOR' | 'MASTER' | 'PHD' | 'OTHER'
+      > = {
+        Primary: 'PRIMARY',
+        Secondary: 'SECONDARY',
+        Diploma: 'DIPLOMA',
+        Bachelor: 'BACHELOR',
+        Master: 'MASTER',
+        PhD: 'PHD',
       };
 
       // Call both APIs in parallel
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [profileResponse, basicInfoResponse] = await Promise.all([
         // Update gender (separate endpoint)
-        gender ? updateProfile({
-          gender: genderMap[gender],
-        }).unwrap() : Promise.resolve(null),
+        gender
+          ? updateProfile({
+              gender: genderMap[gender],
+            }).unwrap()
+          : Promise.resolve(null),
         // Update other fields
         updateBasicInfo({
           maritalStatus: marital ? maritalMap[marital] : undefined,
