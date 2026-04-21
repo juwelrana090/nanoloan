@@ -11,6 +11,8 @@ export interface KYCState {
   currentStep: string;
   isLoading: boolean;
   error: string | null;
+  biometricSessionId: string | null;
+  selectedIdType: 'NID' | 'PASSPORT' | null;
 }
 
 const initialState: KYCState = {
@@ -23,6 +25,8 @@ const initialState: KYCState = {
   currentStep: 'select-id-type',
   isLoading: false,
   error: null,
+  biometricSessionId: null,
+  selectedIdType: null,
 };
 
 const kycSlice = createSlice({
@@ -79,6 +83,14 @@ const kycSlice = createSlice({
       state.error = action.payload;
     },
 
+    setBiometricSessionId: (state, action: PayloadAction<string | null>) => {
+      state.biometricSessionId = action.payload;
+    },
+
+    setSelectedIdType: (state, action: PayloadAction<'NID' | 'PASSPORT' | null>) => {
+      state.selectedIdType = action.payload;
+    },
+
     resetKYC: () => initialState,
   },
 });
@@ -96,6 +108,8 @@ export const {
   setCurrentStep,
   setLoading,
   setError,
+  setBiometricSessionId,
+  setSelectedIdType,
   resetKYC,
 } = kycSlice.actions;
 

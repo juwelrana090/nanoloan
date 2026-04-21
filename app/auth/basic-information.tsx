@@ -1,12 +1,39 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { useState, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useUpdateBasicInfoMutation, useUpdateProfileMutation, useLazyGetMeQuery } from '@/shared/libs/redux/features/auth/authApi';
+import { useToast } from '@/shared/hooks/useToast';
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
 const EDUCATION_OPTIONS = ['Primary', 'Secondary', 'Diploma', 'Bachelor', 'Master', 'PhD'];
+
+// Reverse mapping for API values to UI values
+const genderMapReverse: Record<string, 'Male' | 'Female' | 'Other'> = {
+  'MALE': 'Male',
+  'FEMALE': 'Female',
+  'OTHER': 'Other',
+};
+
+const maritalMapReverse: Record<string, 'Single' | 'Married' | 'Divorced' | 'Widowed'> = {
+  'SINGLE': 'Single',
+  'MARRIED': 'Married',
+  'DIVORCED': 'Divorced',
+  'WIDOWED': 'Widowed',
+};
+
+const educationMapReverse: Record<string, 'Primary' | 'Secondary' | 'Diploma' | 'Bachelor' | 'Master' | 'PhD'> = {
+  'PRIMARY': 'Primary',
+  'SECONDARY': 'Secondary',
+  'DIPLOMA': 'Diploma',
+  'BACHELOR': 'Bachelor',
+  'MASTER': 'Master',
+  'PHD': 'PhD',
+  'OTHER': 'Primary',
+};
 
 interface DropdownProps {
   label: string;
@@ -62,6 +89,7 @@ interface InputFieldProps {
   onChange: (val: string) => void;
   required?: boolean;
   keyboardType?: any;
+  error?: string;
 }
 
 const InputField = ({
@@ -71,6 +99,7 @@ const InputField = ({
   onChange,
   required,
   keyboardType,
+  error,
 }: InputFieldProps) => (
   <View className="mb-5">
     <Text className="mb-2 text-[15px] font-semibold text-[#1A1A1A]">
@@ -87,17 +116,172 @@ const InputField = ({
         className="text-[15px] text-[#1A1A1A]"
       />
     </View>
+    {error && <Text className="mt-1 text-[12px] text-red-500">{error}</Text>}
   </View>
 );
 
 export default function BasicInformationScreen() {
   const insets = useSafeAreaInsets();
+  const [updateBasicInfo, { isLoading: isLoadingBasic }] = useUpdateBasicInfoMutation();
+  const [updateProfile, { isLoading: isLoadingProfile }] = useUpdateProfileMutation();
+  const [getMe, { isLoading: isLoadingFetch }] = useLazyGetMeQuery();
+  const { showSuccess, showError } = useToast();
+
   const [gender, setGender] = useState('');
   const [marital, setMarital] = useState('');
   const [education, setEducation] = useState('');
   const [nationalId, setNationalId] = useState('');
   const [tin, setTin] = useState('');
   const [passport, setPassport] = useState('');
+
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await getMe().unwrap();
+        const data = response.data;
+
+        // Pre-fill fields if data exists
+        if (data.gender) {
+          setGender(genderMapReverse[data.gender] || '');
+        }
+        if (data.profile?.maritalStatus) {
+          setMarital(maritalMapReverse[data.profile.maritalStatus] || '');
+        }
+        if (data.profile?.educationLevel) {
+          setEducation(educationMapReverse[data.profile.educationLevel] || '');
+        }
+        if (data.profile?.nationalId) {
+          setNationalId(data.profile.nationalId);
+        }
+        if (data.profile?.tin) {
+          setTin(data.profile.tin);
+        }
+        if (data.profile?.passportNo) {
+          setPassport(data.profile.passportNo);
+        }
+      } catch {
+        // If no data found or error, start with empty form
+        console.log('No existing user data found, starting with empty form');
+      }
+    };
+
+    fetchUserData();
+  }, [getMe]);
+
+  // Clear error when user starts typing
+  const clearError = (field: string) => {
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
+
+  const handleSubmit = async () => {
+    // Clear previous errors
+    setErrors({});
+
+    // Validate required fields
+    const validationErrors: Record<string, string> = {};
+    if (!nationalId.trim()) {
+      validationErrors.nationalId = 'National ID is required';
+    }
+    if (!tin.trim()) {
+      validationErrors.tin = 'TIN is required';
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      showError({
+        title: 'Validation Failed',
+        message: 'Please fix the errors below',
+      });
+      return;
+    }
+
+    try {
+      // Map form values to API enum values
+      const genderMap: Record<string, 'MALE' | 'FEMALE' | 'OTHER'> = {
+        'Male': 'MALE',
+        'Female': 'FEMALE',
+        'Other': 'OTHER',
+      };
+
+      const maritalMap: Record<string, 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED'> = {
+        'Single': 'SINGLE',
+        'Married': 'MARRIED',
+        'Divorced': 'DIVORCED',
+        'Widowed': 'WIDOWED',
+      };
+
+      const educationMap: Record<string, 'PRIMARY' | 'SECONDARY' | 'DIPLOMA' | 'BACHELOR' | 'MASTER' | 'PHD' | 'OTHER'> = {
+        'Primary': 'PRIMARY',
+        'Secondary': 'SECONDARY',
+        'Diploma': 'DIPLOMA',
+        'Bachelor': 'BACHELOR',
+        'Master': 'MASTER',
+        'PhD': 'PHD',
+      };
+
+      // Call both APIs in parallel
+      const [profileResponse, basicInfoResponse] = await Promise.all([
+        // Update gender (separate endpoint)
+        gender ? updateProfile({
+          gender: genderMap[gender],
+        }).unwrap() : Promise.resolve(null),
+        // Update other fields
+        updateBasicInfo({
+          maritalStatus: marital ? maritalMap[marital] : undefined,
+          educationLevel: education ? educationMap[education] : undefined,
+          nationalId: nationalId.trim() || undefined,
+          tin: tin.trim() || undefined,
+          passportNo: passport.trim() || undefined,
+        }).unwrap(),
+      ]);
+
+      showSuccess({
+        title: 'Success',
+        message: basicInfoResponse.message || 'Basic information updated successfully',
+      });
+
+      // Navigate to next screen
+      router.push('/auth/addresses-update');
+    } catch (error: any) {
+      console.error('Update basic info error:', error);
+
+      // Handle validation errors (422)
+      if (error?.status === 422) {
+        const apiErrors = error.data?.errors || {};
+        const fieldErrors: Record<string, string> = {};
+
+        // Convert API errors to field-level errors
+        Object.keys(apiErrors).forEach((field) => {
+          const messages = apiErrors[field];
+          if (Array.isArray(messages)) {
+            fieldErrors[field] = messages[0];
+          } else if (typeof messages === 'string') {
+            fieldErrors[field] = messages;
+          }
+        });
+
+        setErrors(fieldErrors);
+        showError({
+          title: 'Validation Failed',
+          message: 'Please fix the errors below',
+        });
+      } else {
+        // Handle other errors
+        const errorMsg = error?.data?.message || 'Failed to update basic information';
+        showError({ title: 'Error', message: errorMsg });
+      }
+    }
+  };
+
+  // Field-level errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const isLoading = isLoadingFetch || isLoadingBasic || isLoadingProfile;
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
@@ -137,29 +321,48 @@ export default function BasicInformationScreen() {
             label="National ID"
             placeholder="XXXXXXXXXXXXXX"
             value={nationalId}
-            onChange={setNationalId}
+            onChange={(val) => {
+              setNationalId(val);
+              clearError('nationalId');
+            }}
             required
+            error={errors.nationalId}
           />
           <InputField
             label="TIN"
             placeholder="XXXXXXXXXXXXXX"
             value={tin}
-            onChange={setTin}
+            onChange={(val) => {
+              setTin(val);
+              clearError('tin');
+            }}
             required
+            error={errors.tin}
           />
           <InputField
             label="Passport No."
             placeholder="XXXXXXXXXXXXXX"
             value={passport}
-            onChange={setPassport}
+            onChange={(val) => {
+              setPassport(val);
+              clearError('passportNo');
+            }}
+            error={errors.passportNo}
           />
 
           {/* Next Button */}
           <TouchableOpacity
-            onPress={() => router.push('/auth/addresses-update')}
+            onPress={handleSubmit}
+            disabled={isLoading}
             activeOpacity={0.8}
-            className="mt-4 h-[54px] items-center justify-center rounded-full bg-[#00C897]">
-            <Text className="text-[18px] font-bold text-white">Next</Text>
+            className={`mt-4 h-[54px] items-center justify-center rounded-full ${
+              isLoading ? 'bg-[#CCC]' : 'bg-[#00C897]'
+            }`}>
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-[18px] font-bold text-white">Next</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </View>

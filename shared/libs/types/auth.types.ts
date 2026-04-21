@@ -185,3 +185,39 @@ export interface ChangePasswordRequest {
 export interface DeleteAccountRequest {
   password: string; // Current account password for confirmation
 }
+
+// ─── Biometric Management ────────────────────────────────────────────────────────
+
+export interface BiometricStartRequest {
+  // Empty body
+}
+
+export interface BiometricStartResponse {
+  sessionId: string;
+  [key: string]: any;
+}
+
+// FormData for biometric uploads - use 'any' for React Native file objects
+export interface BiometricIdVerifyRequest {
+  idType: 'NID' | 'PASSPORT';
+  idCardImage: any; // React Native file object: { uri, name, type }
+}
+
+export interface BiometricIdVerifyResponse {
+  id: string;
+  status: string;
+  ocrData?: {
+    name?: string;
+    idNumber?: string;
+    dateOfBirth?: string;
+  };
+}
+
+export interface BiometricAddressVerifyRequest {
+  addressImage: any; // React Native file object: { uri, name, type }
+}
+
+export interface BiometricAddressVerifyResponse {
+  id: string;
+  status: string;
+}

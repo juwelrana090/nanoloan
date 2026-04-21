@@ -1,466 +1,553 @@
-# Senior Developer Agent Prompt — KYC: NID/Passport OCR Fix + ID Capture Frame Crop
+# Senior Developer Agent Prompt — NanoLoan: Context Builder + 5 Screen API Integration
 
 ## 🎯 Your Role
 
-You are a **Senior React Native Mobile Developer** specializing in camera, image processing, and OCR integration. You work on the **NanoLoan** React Native Expo project. You fix bugs precisely — you read the full existing implementation first, then fix without breaking anything else.
-
----
-
-## ⚠️ CRITICAL: Read First
-
-Before changing anything, read ALL of the following files completely:
-
-```
-app/kyc/id-capture.tsx              ← IDCaptureScreen (camera + frame border)
-app/kyc/id-capture-preview.tsx      ← IDCapturePreviewScreen (OCR trigger + result display)
-```
-
-Then search the entire project for:
-
-- The OCR / document detection service: search `nid`, `ocr`, `detection`, `passport`, `tesseract`, `google vision`, `mlkit`, `textRecognition`
-- Any hook like `useDocumentScan`, `useOCR`, `useNIDDetection`
-- Any utility in `lib/`, `utils/`, `services/`, `shared/` related to document parsing
-- Any API call that sends the image for server-side OCR
-
-Map exactly:
-
-1. How the current NID/Passport detection works (library used, config, field extraction logic)
-2. Where the extracted fields are stored (state, Zustand store, AsyncStorage, context)
-3. How the extracted data flows to the next screen(s)
-4. Where field names are mapped (what key maps to "name", "date of birth", etc.)
-
-**Do NOT write any code until this mapping is complete.**
+You are a **Senior React Native Developer** working on the **NanoLoan** Expo Router project. You complete 3 tasks in sequence: audit the project → write full context documentation → wire up 5 screens to their backend APIs.
 
 ---
 
 ## 📁 Project Root
 
 ```
-D:\ReactNative\nano-loan
+D:\ReactNative\nanoloan
 ```
-
-(or wherever the project root is — confirm by checking `package.json`)
 
 ---
 
-## 🐛 Task 01 — Fix NID / Passport Detection
+## ⚠️ CRITICAL: Execution Order
 
-### Problem
-
-The NID and Passport detection is not extracting fields correctly.
-
-### Required Field Extraction — Fix to Extract Exactly These Fields:
-
-#### 🪪 NID Front
-
-| Field Key     | Display Label | Notes                        |
-| ------------- | ------------- | ---------------------------- |
-| `name`        | Name          | English name printed on NID  |
-| `dateOfBirth` | Date of Birth | Format: DD MMM YYYY          |
-| `nidNo`       | NID No        | 10 or 17 digit number        |
-| `fatherName`  | পিতা          | Bengali text — father's name |
-| `motherName`  | মাতা          | Bengali text — mother's name |
-
-#### 🪪 NID Back
-
-| Field Key      | Display Label  | Notes                 |
-| -------------- | -------------- | --------------------- |
-| `address`      | ঠিকানা         | Bengali address block |
-| `placeOfBirth` | Place of Birth | English text          |
-
-#### 🛂 Passport Front
-
-| Field Key        | Display Label   | Notes |
-| ---------------- | --------------- | ----- |
-| `surname`        | Surname         |       |
-| `givenName`      | Given Name      |       |
-| `dateOfBirth`    | Date of Birth   |       |
-| `passportNumber` | Passport Number |       |
-| `dateOfIssue`    | Date of Issue   |       |
-| `dateOfExpiry`   | Date of Expiry  |       |
-
-#### 🛂 Passport Back
-
-| Field Key                   | Display Label                  | Notes |
-| --------------------------- | ------------------------------ | ----- |
-| `permanentAddress`          | Permanent Address              |       |
-| `emergencyContactAddress`   | Emergency Contact Address      |       |
-| `emergencyContactTelephone` | Emergency Contact Telephone No |       |
+**Do NOT skip phases. Do NOT start Task 02 before Task 01 is fully complete.**
 
 ---
 
-### Detection Fix — Implementation Rules
+# ═══════════════════════════════════════
 
-#### Step 1 — Identify the current OCR library
+# TASK 01 — Full Project Audit + Context
 
-Check which library is currently installed and used:
+# ═══════════════════════════════════════
 
-- `@react-native-ml-kit/text-recognition` — Google ML Kit (best for Bengali text)
-- `expo-camera` with manual OCR
-- A backend API call with base64 image
-- `react-native-text-detector`
-- Any other
+## Phase 1 — Read the ENTIRE project
 
-#### Step 2 — If using ML Kit (`@react-native-ml-kit/text-recognition`)
+Scan every file and folder. For each area, extract the exact information listed:
 
-The current extraction logic is likely using naive line-by-line text matching. Fix it with **regex + label-based parsing**:
+### 1.1 — Project foundation
 
-```typescript
-// services/ocr/nidParser.ts
+Read: `package.json`, `app.json`, `tsconfig.json`, `babel.config.js`, `tailwind.config.js`
+Extract:
 
-export function parseNIDFront(rawText: string): Partial<NIDFrontFields> {
-  const lines = rawText
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
+- All installed dependencies (especially HTTP client, state management, storage)
+- Path aliases (`@/`, `~/`, etc.)
+- Expo SDK version
+- NativeWind version
 
-  const result: Partial<NIDFrontFields> = {};
+### 1.2 — Entry point and navigation
 
-  // Name — line after "Name" label (English)
-  const nameIdx = lines.findIndex((l) => /^Name$/i.test(l));
-  if (nameIdx !== -1 && lines[nameIdx + 1]) {
-    result.name = lines[nameIdx + 1];
-  }
+Read: `app/_layout.tsx`, `app/index.tsx`, all `_layout.tsx` files
+Extract:
 
-  // Date of Birth
-  const dobMatch = rawText.match(/Date of Birth[:\s]*(\d{1,2}\s+\w+\s+\d{4})/i);
-  if (dobMatch) result.dateOfBirth = dobMatch[1];
+- Root layout structure (providers, guards, navigation)
+- Auth-gated navigation pattern (how logged-in vs logged-out is handled)
+- All route segments and their purpose
 
-  // NID No — 10 or 17 consecutive digits
-  const nidMatch = rawText.match(/\b(\d{10}|\d{17})\b/);
-  if (nidMatch) result.nidNo = nidMatch[1];
+### 1.3 — Auth system
 
-  // পিতা (Father) — Bengali label followed by name
-  const fatherMatch = rawText.match(/পিতা[:\s]*([^\n]+)/);
-  if (fatherMatch) result.fatherName = fatherMatch[1].trim();
+Search for: `login`, `token`, `auth`, `session`, `useAuth`, `AuthContext`, `zustand`, `redux`, `jotai`
+Extract:
 
-  // মাতা (Mother) — Bengali label followed by name
-  const motherMatch = rawText.match(/মাতা[:\s]*([^\n]+)/);
-  if (motherMatch) result.motherName = motherMatch[1].trim();
+- How auth tokens are stored (AsyncStorage, SecureStore, Zustand, etc.)
+- Where `accessToken` / `refreshToken` live
+- Auth hook or context API (`useAuth()` → what it returns)
+- How the auth header (`Authorization: Bearer <token>`) is attached to requests
 
-  return result;
-}
+### 1.4 — API / HTTP layer
 
-export function parseNIDBack(rawText: string): Partial<NIDBackFields> {
-  const result: Partial<NIDBackFields> = {};
+Search for: `axios`, `fetch`, `api`, `httpClient`, `baseURL`, `interceptor`
+Extract:
 
-  // ঠিকানা (Address) — Bengali address block after label
-  const addressMatch = rawText.match(/ঠিকানা[:\s]*([^\n]+(?:\n[^\n]+)*?)(?=Place of Birth|$)/i);
-  if (addressMatch) result.address = addressMatch[1].trim();
+- Base URL constant (should be `https://backend-nanoloan.giize.com`)
+- HTTP client setup file path
+- How requests are made (custom hook, service function, direct fetch)
+- How auth headers are injected
+- How errors are handled globally (interceptors, try/catch pattern)
+- Existing API service files and their patterns
 
-  // Place of Birth
-  const pobMatch = rawText.match(/Place of Birth[:\s]*([^\n]+)/i);
-  if (pobMatch) result.placeOfBirth = pobMatch[1].trim();
+### 1.5 — State management
 
-  return result;
-}
+Search for: `store`, `zustand`, `redux`, `context`, `useState`
+Extract:
 
-export function parsePassportFront(rawText: string): Partial<PassportFrontFields> {
-  const result: Partial<PassportFrontFields> = {};
+- Global state libraries and store locations
+- KYC/biometric state (if exists): where document data, images, and session IDs are stored
+- User profile state: where user data is stored after login
 
-  // Surname
-  const surnameMatch = rawText.match(/Surname[:\s]*([^\n]+)/i);
-  if (surnameMatch) result.surname = surnameMatch[1].trim();
+### 1.6 — KYC / eKYC screens inventory
 
-  // Given Name
-  const givenMatch = rawText.match(/Given Name[s]?[:\s]*([^\n]+)/i);
-  if (givenMatch) result.givenName = givenMatch[1].trim();
+Read all files in: `app/kyc/`, `app/auth/`, `modules/kyc/`, `shared/components/kyc/`
+Map every screen:
 
-  // Passport Number — 2 letters + 7 digits (Bangladesh format: A1234567)
-  const passportNoMatch = rawText.match(/\b([A-Z]{1,2}\d{7})\b/);
-  if (passportNoMatch) result.passportNumber = passportNoMatch[1];
+- File path
+- Screen name / component name
+- What it does
+- Navigation: where it comes from and where it goes next
+- Current state (has API call? no API call? placeholder?)
 
-  // Dates — DD MMM YYYY or DD/MM/YYYY patterns
-  const datePattern = /(\d{1,2}[\s\/\-]\w{3,9}[\s\/\-]\d{4})/g;
-  const dates = [...rawText.matchAll(datePattern)].map((m) => m[1]);
+### 1.7 — Existing screen files to integrate
 
-  const dobMatch = rawText.match(/Date of Birth[:\s]*(\d{1,2}[\s\/]\w+[\s\/]\d{4})/i);
-  if (dobMatch) result.dateOfBirth = dobMatch[1];
+Locate these exact files (search if paths differ):
 
-  const issueMatch = rawText.match(/Date of Issue[:\s]*(\d{1,2}[\s\/]\w+[\s\/]\d{4})/i);
-  if (issueMatch) result.dateOfIssue = issueMatch[1];
-
-  const expiryMatch = rawText.match(/Date of Expir[y|ation][:\s]*(\d{1,2}[\s\/]\w+[\s\/]\d{4})/i);
-  if (expiryMatch) result.dateOfExpiry = expiryMatch[1];
-
-  return result;
-}
-
-export function parsePassportBack(rawText: string): Partial<PassportBackFields> {
-  const result: Partial<PassportBackFields> = {};
-
-  // Permanent Address
-  const permAddrMatch = rawText.match(/Permanent Address[:\s]*([^\n]+(?:\n[^\n]+)?)/i);
-  if (permAddrMatch) result.permanentAddress = permAddrMatch[1].trim();
-
-  // Emergency Contact Address
-  const emergAddrMatch = rawText.match(/Address[:\s]*([^\n]+)/i);
-  if (emergAddrMatch) result.emergencyContactAddress = emergAddrMatch[1].trim();
-
-  // Telephone No
-  const telMatch = rawText.match(/Telephone[^:]*[:\s]*([+\d\s\-()]+)/i);
-  if (telMatch) result.emergencyContactTelephone = telMatch[1].trim();
-
-  return result;
-}
+```
+app/auth/basic-information.tsx       OR  app/kyc/basic-information.tsx
+app/auth/addresses-update.tsx        OR  app/kyc/addresses-update.tsx
+app/kyc/started-verification.tsx
+app/kyc/id-capture-preview.tsx
+app/kyc/address-capture-preview.tsx
 ```
 
-#### Step 3 — TypeScript Types
+For each file, read it fully and note:
 
-Create or update:
+- Current form fields and their state variable names
+- Current submit handler (if any)
+- Navigation called on success
+- Any existing API calls
 
-```typescript
-// types/kyc.ts
+### 1.8 — Error handling + feedback patterns
 
-export interface NIDFrontFields {
-  name: string;
-  dateOfBirth: string;
-  nidNo: string;
-  fatherName: string; // পিতা
-  motherName: string; // মাতা
-}
+Search for: `toast`, `alert`, `Alert`, `showToast`, `Snackbar`, `notification`
+Extract:
 
-export interface NIDBackFields {
-  address: string; // ঠিকানা
-  placeOfBirth: string;
-}
-
-export interface PassportFrontFields {
-  surname: string;
-  givenName: string;
-  dateOfBirth: string;
-  passportNumber: string;
-  dateOfIssue: string;
-  dateOfExpiry: string;
-}
-
-export interface PassportBackFields {
-  permanentAddress: string;
-  emergencyContactAddress: string;
-  emergencyContactTelephone: string;
-}
-
-export type IDSide = 'front' | 'back';
-export type IDType = 'nid' | 'passport';
-
-export interface KYCDocumentState {
-  idType: IDType;
-  frontFields: NIDFrontFields | PassportFrontFields | null;
-  backFields: NIDBackFields | PassportBackFields | null;
-  frontImage: string | null;
-  backImage: string | null;
-}
-```
-
-#### Step 4 — Wire into the preview screen
-
-In `app/kyc/id-capture-preview.tsx`:
-
-- After OCR runs, call the correct parser based on `idType` and `side` (front/back)
-- Display ALL extracted fields from the parser result
-- Show a fallback `"—"` for any field that returned empty/undefined
-- Store the parsed result in the KYC state/store for use in the final submission
-
-#### Step 5 — Bengali text support
-
-If Bengali text (পিতা, মাতা, ঠিকানা) is not being recognised:
-
-- Confirm `@react-native-ml-kit/text-recognition` is being run in **Latin + Bengali** script mode
-- If using ML Kit, ensure the Bengali language model is loaded:
-  ```typescript
-  import TextRecognition, { TextRecognitionScript } from '@react-native-ml-kit/text-recognition';
-  const result = await TextRecognition.recognize(imagePath, TextRecognitionScript.DEVANAGARI);
-  // Note: ML Kit uses DEVANAGARI script for Bengali — confirm this matches your library version
-  ```
-- If Bengali still fails, fall back to **positional parsing** (the Bengali fields appear in a known position relative to English fields — parse by line index offset instead of label match)
+- How errors are currently shown to the user in other screens
+- Toast/alert library used (if any)
+- Loading state pattern used (local `useState`, global store)
 
 ---
 
-## 🎯 Task 02 — ID Capture: Crop Image to Frame Border Only
+## Phase 2 — Write Context Documentation
 
-### Problem
+Create the `context/` folder at: `D:\ReactNative\nanoloan\context\`
 
-The camera currently captures the **full screen image**. The requirement is to **crop the captured image to only the area inside the green frame border** defined by `FRAME_WIDTH`, `FRAME_HEIGHT`, `FRAME_LEFT`, `FRAME_TOP`.
+Write these files completely. Every future AI agent **must read this folder first** before opening any source file.
 
-### Current Frame Code (from `app/kyc/id-capture.tsx`)
+---
 
-```tsx
-<View
-  className="absolute z-10 overflow-hidden rounded-xl border-2 border-white/40"
-  style={{ width: FRAME_WIDTH, height: FRAME_HEIGHT, left: FRAME_LEFT, top: FRAME_TOP }}>
-  {/* Corner accents */}
-  <View className="absolute left-0 top-0 h-7 w-7 rounded-tl-xl border-l-4 border-t-4 border-[#25d17f]" />
-  <View className="absolute right-0 top-0 h-7 w-7 rounded-tr-xl border-r-4 border-t-4 border-[#25d17f]" />
-  <View className="absolute bottom-0 left-0 h-7 w-7 rounded-bl-xl border-b-4 border-l-4 border-[#25d17f]" />
-  <View className="absolute bottom-0 right-0 h-7 w-7 rounded-br-xl border-b-4 border-r-4 border-[#25d17f]" />
-  {/* MRZ lines */}
-  <View className="absolute bottom-3 left-3 right-3">
-    <Text className="text-[16px] leading-[21px] tracking-widest text-white/60">
-      {'<'.repeat(44)}
-    </Text>
-    <Text className="text-[16px] leading-[21px] tracking-widest text-white/60">
-      {'<'.repeat(44)}
-    </Text>
-  </View>
-</View>
+### `context/AGENT_README.md`
+
+```markdown
+# NanoLoan — AI Agent Guide
+
+> READ THIS FILE FIRST before opening any source file.
+
+## What is this app?
+
+NanoLoan is a React Native (Expo) mobile app for loan management.
+Users register, complete KYC verification, and apply for loans.
+
+## How to navigate this context folder
+
+| File                | What it covers                                     |
+| ------------------- | -------------------------------------------------- |
+| project-overview.md | Stack, dependencies, folder structure              |
+| auth.md             | Auth flow, token storage, useAuth hook API         |
+| api.md              | HTTP client setup, base URL, how to make API calls |
+| state.md            | Global stores, KYC state, user state               |
+| screens-kyc.md      | All KYC screens, navigation flow, API connections  |
+| error-handling.md   | Toast/alert patterns, loading states               |
+
+## ⛔ Rules for all agents
+
+- ALWAYS attach `Authorization: Bearer <token>` for authenticated endpoints
+- NEVER hardcode the base URL — use the existing constant
+- ALWAYS read existing screen code before editing it
+- ALWAYS follow the existing error handling pattern
+- ALWAYS follow the existing loading state pattern
 ```
 
-### Fix — Implement Frame-Only Crop
+---
 
-#### Step 1 — Read existing constants
+### `context/project-overview.md`
 
-Find `FRAME_WIDTH`, `FRAME_HEIGHT`, `FRAME_LEFT`, `FRAME_TOP` in `id-capture.tsx`.
-They are likely computed from `Dimensions.get('window')`. Read the exact values.
+Fill in from your Phase 1 audit:
 
-#### Step 2 — Install image cropping library (if not already installed)
+- Expo SDK version, NativeWind version, Router version
+- All key dependencies with their purpose
+- Full annotated folder structure (2 levels deep minimum)
+- Path aliases and what they resolve to
+- How to run the project
 
-Check `package.json` for:
+---
 
-- `expo-image-manipulator` ← preferred (already in Expo ecosystem)
-- `react-native-image-crop-picker`
-- `@shopify/react-native-skia`
+### `context/auth.md`
 
-If `expo-image-manipulator` is not installed:
+Fill in from your Phase 1 audit:
 
-```bash
-npx expo install expo-image-manipulator
+- Full auth flow (registration → OTP → login → token stored)
+- Token storage mechanism and exact storage key
+- `useAuth()` hook — full return type (token, user, login, logout, etc.)
+- How to get the current access token in a component or service
+- JWT payload structure (what fields are in the token)
+
+---
+
+### `context/api.md`
+
+Fill in from your Phase 1 audit:
+
+- Base URL: `https://backend-nanoloan.giize.com`
+- HTTP client file path and how it's used
+- Auth header injection (exact code pattern)
+- Standard response envelope shape
+- Standard error response shape
+- Example of a complete API call (request + error handling + loading state)
+
+---
+
+### `context/state.md`
+
+Fill in from your Phase 1 audit:
+
+- State management library and store locations
+- KYC state shape (document type, side, images, session token, extracted fields)
+- User profile state shape
+- How to read/write each store
+
+---
+
+### `context/screens-kyc.md`
+
+Fill in from your Phase 1 audit:
+
+- Full KYC navigation flow diagram (text-based)
+- Every screen: file path, purpose, inputs, outputs, API call (if any)
+- Where each screen navigates on success and on error
+
+---
+
+### `context/error-handling.md`
+
+Fill in from your Phase 1 audit:
+
+- How errors are shown to the user (exact function/component used)
+- Loading state pattern (exact useState pattern or store field)
+- Success feedback pattern
+
+---
+
+# ══════════════════════════════════════════
+
+# TASK 02 — Read Live API Documentation
+
+# ══════════════════════════════════════════
+
+Fetch the full OpenAPI spec from:
+
+```
+https://backend-nanoloan.giize.com/api-json
 ```
 
-#### Step 3 — Implement crop after capture
+From this spec, extract the full contract for each of these 5 endpoints:
+
+- `PUT /v1/users/me`
+- `POST /v1/users/me/addresses`
+- `POST /v1/biometric/start`
+- `POST /v1/biometric/id-verify`
+- `POST /v1/biometric/address-verify`
+
+For each endpoint, note:
+
+- Required request headers
+- Request body shape (all fields, types, required vs optional)
+- Content-Type (`application/json` vs `multipart/form-data`)
+- Success response shape (status code + body)
+- Error response shapes (400, 401, 422, etc.)
+
+Save a summary of all 5 contracts before proceeding to Task 03.
+
+---
+
+# ═══════════════════════════════════════════════
+
+# TASK 03 — Wire 5 Screens to Backend APIs
+
+# ═══════════════════════════════════════════════
+
+## Global Rules for All API Integration
+
+1. **Read the existing screen file fully** before editing it
+2. **Follow the existing HTTP client pattern** from `context/api.md`
+3. **Follow the existing auth header pattern** — attach `Authorization: Bearer <token>`
+4. **Follow the existing loading state pattern** from `context/error-handling.md`
+5. **Follow the existing error feedback pattern** from `context/error-handling.md`
+6. **TypeScript strict** — all request bodies and responses must be typed
+7. **Never hardcode base URL** — use the existing constant
+8. **No new HTTP libraries** — use whatever is already in `package.json`
+
+---
+
+## Screen 01 — `BasicInformationScreen`
+
+**File:** `app/auth/basic-information.tsx` (or current location from audit)
+**API:** `PUT /v1/users/me`
+**Auth:** Required — `Authorization: Bearer <token>`
+**Content-Type:** `application/json`
+
+### Request Body (from API spec — verify fields):
 
 ```typescript
-// utils/cropToFrame.ts
-import * as ImageManipulator from 'expo-image-manipulator';
-import { Dimensions } from 'react-native';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-interface FrameConfig {
-  frameWidth: number;
-  frameHeight: number;
-  frameLeft: number;
-  frameTop: number;
+interface UpdateUserProfileRequest {
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  maritalStatus?: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED';
+  educationLevel?: 'PRIMARY' | 'SECONDARY' | 'DIPLOMA' | 'BACHELOR' | 'MASTER' | 'PHD' | 'OTHER';
+  nationalId?: string; // NID number
+  tin?: string; // Tax Identification Number
+  passportNo?: string; // Passport number
 }
+// ⚠️ Verify exact field names and enum values from the live API spec
+```
 
-export async function cropImageToFrame(
-  photoUri: string,
-  frame: FrameConfig,
-  photoWidth: number, // actual photo resolution width
-  photoHeight: number // actual photo resolution height
-): Promise<string> {
-  // Calculate scale ratio between photo resolution and screen size
-  const scaleX = photoWidth / SCREEN_WIDTH;
-  const scaleY = photoHeight / SCREEN_HEIGHT;
+### Implementation:
 
-  // Map frame screen coordinates to actual photo pixel coordinates
-  const cropRegion = {
-    originX: Math.round(frame.frameLeft * scaleX),
-    originY: Math.round(frame.frameTop * scaleY),
-    width: Math.round(frame.frameWidth * scaleX),
-    height: Math.round(frame.frameHeight * scaleY),
+```typescript
+// Create: services/users/updateProfile.ts (or follow existing service pattern)
+export async function updateUserProfile(
+  data: UpdateUserProfileRequest,
+  token: string
+): Promise<UpdateUserProfileResponse> {
+  // Use existing HTTP client — do NOT use raw fetch
+}
+```
+
+### Behavior:
+
+- **On submit:** Show loading indicator → call API
+- **On success:** Navigate to `AddressesUpdateScreen` (next step in KYC flow)
+- **On 422 validation error:** Show field-level errors under each input
+- **On 401:** Handle token expiry (follow existing pattern)
+- **On any other error:** Show error feedback using existing toast/alert pattern
+
+---
+
+## Screen 02 — `AddressesUpdateScreen`
+
+**File:** `app/auth/addresses-update.tsx` (or current location from audit)
+**API:** `POST /v1/users/me/addresses`
+**Auth:** Required — `Authorization: Bearer <token>`
+**Content-Type:** `application/json`
+
+### Request Body (from API spec — verify fields):
+
+```typescript
+interface CreateAddressRequest {
+  type: 'PRESENT' | 'PERMANENT';
+  address: string;
+  postCode: string;
+  city: string;
+  state: string;
+  country: string;
+  yearsAtAddress: number;
+}
+// ⚠️ Verify exact field names from the live API spec
+```
+
+### Behavior:
+
+- **On submit:** Show loading → call API
+- **On success:** Navigate to `StartedVerificationScreen` (biometric start)
+- **On 422:** Show field-level validation errors
+- **On error:** Show error feedback using existing toast/alert pattern
+
+---
+
+## Screen 03 — `StartedVerificationScreen`
+
+**File:** `app/kyc/started-verification.tsx` (or current location from audit)
+**API:** `POST /v1/biometric/start`
+**Auth:** Required — `Authorization: Bearer <token>`
+**Content-Type:** `application/json`
+**Request Body:** None (empty POST or verify from spec)
+
+### Response (from API spec — verify):
+
+```typescript
+interface BiometricStartResponse {
+  success: boolean;
+  message: string;
+  data: {
+    sessionId?: string; // ⚠️ Verify field name from spec
+    // ... other fields
   };
-
-  const result = await ImageManipulator.manipulateAsync(photoUri, [{ crop: cropRegion }], {
-    compress: 0.9,
-    format: ImageManipulator.SaveFormat.JPEG,
-  });
-
-  return result.uri;
 }
 ```
 
-#### Step 4 — Wire into the capture handler
+### Behavior:
 
-In `app/kyc/id-capture.tsx`, find the camera capture handler (likely `takePicture()` or `onCapture`). After the photo is taken:
+- **On screen load (or on button press "Start Verification"):** Call this API automatically
+- **Save the `sessionId`** (or equivalent) from the response into the KYC state/store — it will be needed by the ID verify and address verify calls
+- **On success:** Navigate to `SelectIDTypeScreen`
+- **On error:** Show error feedback + retry option
 
-```typescript
-// After capturing photo
-const photo = await cameraRef.current.takePictureAsync({
-  quality: 0.9,
-  exif: false,
-});
+### Important:
 
-// Crop to frame area only
-const croppedUri = await cropImageToFrame(
-  photo.uri,
-  {
-    frameWidth: FRAME_WIDTH,
-    frameHeight: FRAME_HEIGHT,
-    frameLeft: FRAME_LEFT,
-    frameTop: FRAME_TOP,
-  },
-  photo.width,
-  photo.height
-);
-
-// Navigate to preview with cropped image (not raw photo)
-router.push({
-  pathname: '/kyc/id-capture-preview',
-  params: { imageUri: croppedUri, idType, side },
-});
-```
-
-#### Step 5 — Verify OCR improvement
-
-After cropping, the OCR input is a tight ID card image with no background noise.
-This alone will significantly improve text recognition accuracy.
-Confirm the preview screen uses `croppedUri` not the original `photo.uri` for OCR.
+After calling this endpoint, store the returned session token/ID in the KYC global state so `IDCapturePreviewScreen` and `AddressCapturePreviewScreen` can use it.
 
 ---
 
-## 📋 Implementation Order
+## Screen 04 — `IDCapturePreviewScreen`
 
-Execute in this exact order:
+**File:** `app/kyc/id-capture-preview.tsx` (or current location from audit)
+**Trigger:** User presses "Confirm & Continue" button
+**API:** `POST /v1/biometric/id-verify`
+**Auth:** Required — `Authorization: Bearer <token>`
+**Content-Type:** `multipart/form-data`
 
-1. Read all existing files (audit only, no edits)
-2. Create `types/kyc.ts` with all field interfaces
-3. Create `utils/ocr/nidParser.ts` with all 4 parser functions
-4. Create `utils/cropToFrame.ts` with the crop utility
-5. Fix `app/kyc/id-capture.tsx` — add crop after capture
-6. Fix `app/kyc/id-capture-preview.tsx` — wire correct parser per `idType` + `side`, display all fields
-7. Run on device and test with a real NID image (both front and back)
-8. Run on device and test with a real Passport image (both front and back)
+### Request Body (from API spec — verify fields):
+
+```typescript
+// This is a multipart/form-data upload
+const formData = new FormData();
+formData.append('idType', idType); // 'NID' | 'PASSPORT'
+formData.append('idCardImage', {
+  // The cropped photo from id-capture screen
+  uri: croppedImageUri,
+  name: 'id-card.jpg',
+  type: 'image/jpeg',
+} as any);
+// ⚠️ Verify exact field names from the live API spec
+// Also append sessionId or biometricSessionToken if required by spec
+```
+
+### Read from KYC state:
+
+- `croppedImageUri` — the cropped ID card image URI (from id-capture screen)
+- `idType` — `'NID'` or `'PASSPORT'` (from select-id-type screen)
+- `sessionId` — from biometric start response (stored in Step 03)
+
+### Behavior:
+
+- **On "Confirm & Continue" press:** Show loading → build FormData → call API
+- **On success:** Navigate to `AddressRolesScreen` (next KYC step)
+- **On error:** Show error feedback + "Retake" option to go back to camera
+
+---
+
+## Screen 05 — `AddressCapturePreviewScreen`
+
+**File:** `app/kyc/address-capture-preview.tsx` (or current location from audit)
+**Trigger:** User presses "Confirm" button
+**API:** `POST /v1/biometric/address-verify`
+**Auth:** Required — `Authorization: Bearer <token>`
+**Content-Type:** `multipart/form-data`
+
+### Request Body (from API spec — verify fields):
+
+```typescript
+// This is a multipart/form-data upload
+const formData = new FormData();
+formData.append('addressImage', {
+  uri: croppedAddressImageUri,
+  name: 'address-doc.jpg',
+  type: 'image/jpeg',
+} as any);
+// ⚠️ Verify exact field names from the live API spec
+// Also append sessionId if required by spec
+```
+
+### Read from KYC state:
+
+- `croppedAddressImageUri` — from address-capture screen
+- `sessionId` — from biometric start response
+
+### Behavior:
+
+- **On "Confirm" press:** Show loading → build FormData → call API
+- **On success:** Navigate to `FacialRecognitionScreen`
+- **On error:** Show error feedback + "Retake" option
+
+---
+
+## Shared API Service Layer
+
+Create (or extend) the service files following the existing project pattern:
+
+```
+services/
+  users/
+    updateProfile.ts         ← PUT /v1/users/me
+    createAddress.ts         ← POST /v1/users/me/addresses
+  biometric/
+    startVerification.ts     ← POST /v1/biometric/start
+    verifyId.ts              ← POST /v1/biometric/id-verify
+    verifyAddress.ts         ← POST /v1/biometric/address-verify
+```
+
+Each service function must:
+
+- Accept typed request params
+- Return typed response
+- Throw typed errors (or return `{ data, error }` — match existing pattern)
+- Never contain UI logic (no `Alert`, no `router.push`)
+
+---
+
+## KYC State Updates Required
+
+After Task 01 audit, update the KYC state store to include these fields if missing:
+
+```typescript
+interface KYCState {
+  // Biometric session
+  biometricSessionId: string | null; // from POST /v1/biometric/start
+
+  // ID verification
+  idType: 'NID' | 'PASSPORT' | null;
+  idSide: 'front' | 'back';
+  idFrontImageUri: string | null; // cropped front image
+  idBackImageUri: string | null; // cropped back image
+
+  // Address verification
+  addressImageUri: string | null; // cropped address document
+
+  // Parsed OCR fields (from previous task fix)
+  extractedIdFields: NIDFrontFields | PassportFrontFields | null;
+  extractedAddressFields: NIDBackFields | PassportBackFields | null;
+}
+```
 
 ---
 
 ## ✅ Definition of Done
 
 ```
-✅ TASK 01 — NID/Passport Detection Fixed
+✅ TASK 01 — Context Complete
 
-NID Front extracts:
-- [ ] name
-- [ ] dateOfBirth
-- [ ] nidNo
-- [ ] fatherName (পিতা)
-- [ ] motherName (মাতা)
+Files created in D:\ReactNative\nanoloan\context\:
+- [ ] AGENT_README.md
+- [ ] project-overview.md
+- [ ] auth.md              (token storage + useAuth API documented)
+- [ ] api.md               (HTTP client pattern + auth header documented)
+- [ ] state.md             (KYC state + user state documented)
+- [ ] screens-kyc.md       (full KYC flow + all screens documented)
+- [ ] error-handling.md    (toast/alert + loading patterns documented)
 
-NID Back extracts:
-- [ ] address (ঠিকানা)
-- [ ] placeOfBirth
+✅ TASK 02 — API Contracts Documented
 
-Passport Front extracts:
-- [ ] surname
-- [ ] givenName
-- [ ] dateOfBirth
-- [ ] passportNumber
-- [ ] dateOfIssue
-- [ ] dateOfExpiry
+Endpoint contracts verified from live spec:
+- [ ] PUT  /v1/users/me            — request body + response typed
+- [ ] POST /v1/users/me/addresses  — request body + response typed
+- [ ] POST /v1/biometric/start     — response + sessionId field confirmed
+- [ ] POST /v1/biometric/id-verify — multipart fields confirmed
+- [ ] POST /v1/biometric/address-verify — multipart fields confirmed
 
-Passport Back extracts:
-- [ ] permanentAddress
-- [ ] emergencyContactAddress
-- [ ] emergencyContactTelephone
+✅ TASK 03 — API Integration Complete
 
-✅ TASK 02 — ID Capture Frame Crop Fixed
-
-- [ ] expo-image-manipulator installed (or existing lib used)
-- [ ] cropImageToFrame() utility created
-- [ ] Capture handler crops to frame before navigating to preview
-- [ ] OCR receives cropped image (not full screen photo)
-- [ ] Preview screen shows cropped image, not full screen photo
-- [ ] No regression on camera UI (frame border, corners, MRZ lines unchanged)
+- [ ] BasicInformationScreen       — PUT /v1/users/me wired, loading + error handled
+- [ ] AddressesUpdateScreen        — POST /v1/users/me/addresses wired, loading + error handled
+- [ ] StartedVerificationScreen    — POST /v1/biometric/start wired, sessionId saved to KYC state
+- [ ] IDCapturePreviewScreen       — POST /v1/biometric/id-verify wired, image FormData built correctly
+- [ ] AddressCapturePreviewScreen  — POST /v1/biometric/address-verify wired, image FormData built correctly
+- [ ] All 5 service files created  — fully typed, no UI logic
+- [ ] KYC state updated            — biometricSessionId + image URIs stored
+- [ ] TypeScript compiles clean    — no errors
+- [ ] context/screens-kyc.md updated — reflects new API connections
 
 ⚠️ Issues found (if any):
-- [list anything that blocked implementation]
+- [list anything that could not be completed and why]
 ```

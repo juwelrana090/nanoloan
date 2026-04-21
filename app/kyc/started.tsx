@@ -1,8 +1,12 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { KycHeader, KycCard } from '@/shared/components/kyc';
 import { PhotoId, ProofOfAddress, FacialRecognition } from '@/shared/constants/images';
+import { useStartVerificationMutation } from '@/shared/libs/redux/features/biometric/biometricApi';
+import { useAppDispatch } from '@/shared/hooks/useAppSelector';
+import { setBiometricSessionId } from '@/shared/libs/redux/features/kyc/kycSlice';
+import { useToast } from '@/shared/hooks/useToast';
 
 const steps = [
   {
@@ -23,6 +27,37 @@ const steps = [
 ];
 
 export default function StartedVerificationScreen() {
+  const [startVerification, { isLoading }] = useStartVerificationMutation();
+  const dispatch = useAppDispatch();
+  const { showSuccess, showError } = useToast();
+
+  const handleStartVerification = async () => {
+    try {
+      const response = await startVerification({}).unwrap();
+
+      // Save session ID to Redux store
+      if (response.data?.sessionId) {
+        dispatch(setBiometricSessionId(response.data.sessionId));
+      }
+
+      showSuccess({
+        title: 'Verification Started',
+        message: response.message || 'Please follow the instructions',
+      });
+
+      // Navigate to ID type selection
+      router.push('/kyc/select-id-type');
+    } catch (error: any) {
+      console.error('Start verification error:', error);
+
+      // Handle errors
+      const errorMsg = error?.data?.message || 'Failed to start verification';
+      showError({
+        title: 'Error',
+        message: errorMsg,
+      });
+    }
+  };
   return (
     <View className="flex-1 bg-[#00C897]">
       <KycHeader title="Let's Get Started" />
@@ -57,10 +92,17 @@ export default function StartedVerificationScreen() {
           </View>
 
           <TouchableOpacity
-            onPress={() => router.push('/kyc/select-id-type')}
+            onPress={handleStartVerification}
+            disabled={isLoading}
             activeOpacity={0.8}
-            className="h-[54px] items-center justify-center rounded-full bg-[#00C897]">
-            <Text className="text-[17px] font-bold text-white">Agree And Continue</Text>
+            className={`h-[54px] items-center justify-center rounded-full ${
+              isLoading ? 'bg-[#CCC]' : 'bg-[#00C897]'
+            }`}>
+            {isLoading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-[17px] font-bold text-white">Agree And Continue</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KycCard>

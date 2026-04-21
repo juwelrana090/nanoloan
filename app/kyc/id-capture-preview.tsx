@@ -19,6 +19,8 @@ import {
 } from '@/shared/libs/redux/features/kyc/kycSlice';
 import { parseDocumentData } from '@/utils/ocr/nidParser';
 import { ExtractedData, ValidationError } from '@/types/kyc';
+import { useVerifyIdMutation } from '@/shared/libs/redux/features/biometric/biometricApi';
+import { useToast } from '@/shared/hooks/useToast';
 
 type CaptureSide = 'front' | 'back' | null;
 type DocumentType = 'NID' | 'PASSPORT' | 'UNKNOWN';
@@ -81,6 +83,8 @@ function maskId(id: string): string {
 export default function IDCapturePreviewScreen() {
   const { uri, side } = useLocalSearchParams<{ uri: string; side?: 'front' | 'back' }>();
   const dispatch = useDispatch();
+  const [verifyId, { isLoading: isVerifying }] = useVerifyIdMutation();
+  const { showSuccess, showError } = useToast();
   const [currentSide, setCurrentSide] = useState<CaptureSide>('front');
 
   const frontUri = useSelector((state: RootState) => state.kyc.frontImageUri);
@@ -89,6 +93,7 @@ export default function IDCapturePreviewScreen() {
   const backData = useSelector((state: RootState) => state.kyc.backData);
   const isLoading = useSelector((state: RootState) => state.kyc.isLoading);
   const error = useSelector((state: RootState) => state.kyc.error);
+  const selectedIdType = useSelector((state: RootState) => state.kyc.selectedIdType) || 'NID';
 
   const [debugText, setDebugText] = useState('');
   const showDebug = __DEV__;
@@ -211,6 +216,45 @@ export default function IDCapturePreviewScreen() {
       !(frontData.validationErrors?.some((e) => e.isCritical) ?? false) &&
       !(backData.validationErrors?.some((e) => e.isCritical) ?? false)
     );
+  };
+
+  const handleConfirmAndContinue = async () => {
+    if (!frontUri || !backUri) {
+      showError({ title: 'Error', message: 'Both front and back images are required' });
+      return;
+    }
+
+    try {
+      dispatch(setLoading(true));
+
+      // For now, we'll submit the front image (you may need to submit both front and back separately)
+      const formData = new FormData();
+      formData.append('idType', selectedIdType);
+      formData.append('idCardImage', {
+        uri: frontUri,
+        name: `id-${selectedIdType.toLowerCase()}.jpg`,
+        type: 'image/jpeg',
+      } as any);
+
+      const response = await verifyId(formData as any).unwrap();
+
+      showSuccess({
+        title: 'ID Verified',
+        message: response.message || 'ID card verified successfully',
+      });
+
+      dispatch(setLoading(false));
+      router.push('/kyc/address-roles');
+    } catch (error: any) {
+      console.error('ID verification error:', error);
+      dispatch(setLoading(false));
+
+      const errorMsg = error?.data?.message || 'Failed to verify ID card';
+      showError({
+        title: 'Verification Failed',
+        message: errorMsg,
+      });
+    }
   };
 
   const detectDocumentType = (text: string): DocumentType => {
@@ -460,14 +504,14 @@ export default function IDCapturePreviewScreen() {
           {/* ── Confirm / Continue button ── */}
           {bothCaptured && (
             <TouchableOpacity
-              onPress={() => router.push('/kyc/address-roles')}
+              onPress={handleConfirmAndContinue}
               activeOpacity={0.8}
               className={`mt-8 h-[54px] items-center justify-center rounded-full ${
-                isLoading || !canProceed() ? 'bg-[#CCC]' : 'bg-[#00C897]'
+                isLoading || isVerifying || !canProceed() ? 'bg-[#CCC]' : 'bg-[#00C897]'
               }`}
-              disabled={isLoading || !canProceed()}>
+              disabled={isLoading || isVerifying || !canProceed()}>
               <Text className="text-[17px] font-bold text-white">
-                {isLoading
+                {isLoading || isVerifying
                   ? 'Processing…'
                   : !canProceed()
                     ? 'Fix Issues First'

@@ -9,7 +9,10 @@ import { RootState } from '@/shared/libs/redux/store';
 import {
   setAddressImage,
   clearAddressImage,
+  setLoading,
 } from '@/shared/libs/redux/features/kyc/kycSlice';
+import { useVerifyAddressMutation } from '@/shared/libs/redux/features/biometric/biometricApi';
+import { useToast } from '@/shared/hooks/useToast';
 
 const CheckIcon = () => (
   <Svg width={16} height={16} viewBox="0 0 12 10" fill="none">
@@ -26,6 +29,8 @@ const CheckIcon = () => (
 export default function AddressCapturePreviewScreen() {
   const { uri } = useLocalSearchParams<{ uri?: string }>();
   const dispatch = useDispatch();
+  const [verifyAddress, { isLoading: isVerifying }] = useVerifyAddressMutation();
+  const { showSuccess, showError } = useToast();
 
   const addressUri = useSelector((state: RootState) => state.kyc.addressImageUri);
   const isLoading = useSelector((state: RootState) => state.kyc.isLoading);
@@ -48,8 +53,42 @@ export default function AddressCapturePreviewScreen() {
     router.push('/kyc/address-capture');
   };
 
-  const handleConfirm = () => {
-    router.push('/kyc/facial-recognition');
+  const handleConfirm = async () => {
+    if (!imageUri) {
+      showError({ title: 'Error', message: 'No address document captured' });
+      return;
+    }
+
+    try {
+      dispatch(setLoading(true));
+
+      // Build FormData
+      const formData = new FormData();
+      formData.append('addressImage', {
+        uri: imageUri,
+        name: 'address-document.jpg',
+        type: 'image/jpeg',
+      } as any);
+
+      const response = await verifyAddress(formData as any).unwrap();
+
+      showSuccess({
+        title: 'Address Verified',
+        message: response.message || 'Address document verified successfully',
+      });
+
+      dispatch(setLoading(false));
+      router.push('/kyc/facial-recognition');
+    } catch (error: any) {
+      console.error('Address verification error:', error);
+      dispatch(setLoading(false));
+
+      const errorMsg = error?.data?.message || 'Failed to verify address document';
+      showError({
+        title: 'Verification Failed',
+        message: errorMsg,
+      });
+    }
   };
 
   return (
@@ -82,7 +121,7 @@ export default function AddressCapturePreviewScreen() {
           </View>
 
           {/* Loading */}
-          {isLoading && (
+          {(isLoading || isVerifying) && (
             <View className="mb-4 items-center py-4">
               <ActivityIndicator size="small" color="#00C897" />
               <Text className="mt-2 text-[14px] text-[#555]">Processing document…</Text>
@@ -125,12 +164,12 @@ export default function AddressCapturePreviewScreen() {
           <TouchableOpacity
             onPress={handleConfirm}
             activeOpacity={0.8}
-            disabled={!imageUri || isLoading}
+            disabled={!imageUri || isLoading || isVerifying}
             className={`mt-8 h-[54px] items-center justify-center rounded-full ${
-              !imageUri || isLoading ? 'bg-[#CCC]' : 'bg-[#00C897]'
+              !imageUri || isLoading || isVerifying ? 'bg-[#CCC]' : 'bg-[#00C897]'
             }`}>
             <Text className="text-[17px] font-bold text-white">
-              {isLoading ? 'Processing…' : 'Confirm'}
+              {isLoading || isVerifying ? 'Processing…' : 'Confirm'}
             </Text>
           </TouchableOpacity>
 
@@ -139,7 +178,7 @@ export default function AddressCapturePreviewScreen() {
             onPress={handleRetake}
             activeOpacity={0.8}
             className="mt-3 h-[54px] items-center justify-center rounded-full bg-[#E4F7EE]"
-            disabled={isLoading}>
+            disabled={isLoading || isVerifying}>
             <Text className="text-[17px] font-semibold text-[#888]">Retake</Text>
           </TouchableOpacity>
         </ScrollView>

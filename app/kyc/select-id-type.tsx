@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import { KycHeader, KycCard } from '@/shared/components/kyc';
 import { IdCard, Passport, DriverLicense } from '@/shared/constants/images';
 import { useDispatch } from 'react-redux';
-import { resetKYC } from '@/shared/libs/redux/features/kyc/kycSlice';
+import { resetKYC, setSelectedIdType } from '@/shared/libs/redux/features/kyc/kycSlice';
 
 const CheckmarkIcon = () => (
   <View
@@ -30,8 +30,8 @@ const CheckmarkIcon = () => (
 );
 
 const ID_TYPES = [
-  { id: 'id_card', label: 'NID card', image: IdCard },
-  { id: 'passport', label: 'Passport', image: Passport },
+  { id: 'NID', label: 'NID card', image: IdCard },
+  { id: 'PASSPORT', label: 'Passport', image: Passport },
   // { id: 'drivers_license', label: "Driver's license", image: DriverLicense },
 ];
 
@@ -44,6 +44,12 @@ export default function SelectIDTypeScreen() {
     dispatch(resetKYC());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleContinue = () => {
+    // Save selected ID type to Redux
+    dispatch(setSelectedIdType(selected as 'NID' | 'PASSPORT'));
+    router.push('/kyc/id-capture?side=front');
+  };
 
   return (
     <View className="flex-1 bg-[#00C897]">
@@ -76,7 +82,7 @@ export default function SelectIDTypeScreen() {
 
         <View className="px-6 pb-10">
           <TouchableOpacity
-            onPress={() => router.push('/kyc/id-preview-roles')}
+            onPress={handleContinue}
             activeOpacity={0.8}
             className="h-[54px] items-center justify-center rounded-full bg-[#00C897]">
             <Text className="text-[17px] font-bold text-white">Continue</Text>
