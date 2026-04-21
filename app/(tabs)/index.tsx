@@ -61,16 +61,16 @@ export default function HomeScreen() {
     if (!biometricStatus) return null;
 
     // Check in order: ID → Address → Face
-    if (!biometricStatus.idVerified) {
-      return '/kyc/select-id-type';
-    }
-    if (!biometricStatus.addressVerified) {
-      return '/kyc/address-roles';
-    }
-    if (!biometricStatus.faceVerified) {
-      return '/kyc/facial-recognition';
-    }
-    return null;
+    // if (!biometricStatus.idVerified) {
+    //   return '/kyc/select-id-type';
+    // }
+    // if (!biometricStatus.addressVerified) {
+    //   return '/kyc/address-roles';
+    // }
+    // if (!biometricStatus.faceVerified) {
+    //   return '/kyc/facial-recognition';
+    // }
+    return 'auth/basic-information';
   };
 
   const handleVerifyPress = () => {
