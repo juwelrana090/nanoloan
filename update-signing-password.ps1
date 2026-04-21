@@ -24,7 +24,7 @@ if ($LASTEXITCODE -eq 0) {
 # This file contains the keystore information for signing release builds
 # KEEP THIS FILE SECURE - DO NOT COMMIT TO GIT
 
-RELEASE_STORE_FILE=../android-release.keystore
+RELEASE_STORE_FILE=../../android-release.keystore
 RELEASE_KEY_ALIAS=nanoloan-key
 RELEASE_STORE_PASSWORD=$passwordPlain
 RELEASE_KEY_PASSWORD=$passwordPlain

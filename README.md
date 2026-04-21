@@ -127,11 +127,53 @@ if ($keytool) {
 **For Bash/Git Bash:**
 
 ```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore app\upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass F4t4fSzVNN -keypass F4t4fSzVNN -dname "CN=BeSpeaky, OU=Development, O=BeSpeaky, L=City, S=State, C=US"
+
+
+Get-ChildItem -Path "C:\Program Files\Java" -Recurse -Name "keytool.exe" -ErrorAction SilentlyContinue
+
+"C:\Program Files\Java\jdk-17\bin\keytool.exe" -genkeypair -v -storetype PKCS12 -keystore app\upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass F4t4fSzVNN -keypass F4t4fSzVNN -dname "CN=BeSpeaky, OU=Development, O=BeSpeaky, L=City, S=State, C=US"
+
+
+& "C:\Program Files\Java\jdk-17\bin\keytool.exe" -genkeypair -v -storetype PKCS12 -keystore app\upload-keystore.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass F4t4fSzVNN -keypass F4t4fSzVNN -dname "CN=BeSpeaky, OU=Development, O=BeSpeaky, L=City, S=State, C=US"
+
+& "C:\Program Files\Java\jdk-17\bin\keytool.exe" -genkey -v -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -storepass exchat123 -keypass exchat123 -alias upload -keystore upload-keystore.jks -dname "CN=com.bespeaky.learning.app,OU=,O=,L=,S=,C=US"
+
+copy app\upload-keystore.jks android\app\upload-keystore.jks
+
+.\gradlew clean
+.\gradlew bundleRelease
+
+Get-ChildItem app\build\outputs\bundle\release\app-release.aab
+
+cd android &&
+.\gradlew bundleRelease
+.\gradlew clean
+
+./gradlew clean
+./gradlew assembleRelease
+./gradlew bundleRelease
+
+
+# Error: EBUSY: resource busy or locked, unlink 'C:\Dev\BARC\Speaking App\speaking-react-native-app\android\app\google-services.json'
+
+
+Get-Process | Where-Object {$_.ProcessName -like "*gradle*" -or $_.ProcessName -like "*java*" -or $_.ProcessName -like "*expo*" -or $_.ProcessName -like "*node*"} | Select-Object ProcessName, Id
+
+Stop-Process -Name "java" -Force -ErrorAction SilentlyContinue
+
+Remove-Item -Path "android" -Recurse -Force -ErrorAction SilentlyContinue
+Test-Path "android"
+
+npx expo prebuild --clean
+```
+
+```bash
 # Navigate to android directory
 cd android
 
 # Use keytool directly (adjust path if needed)
-"/c/Program Files/Java/jdk-17/bin/keytool.exe" -genkeypair \ -v \ -storetype PKCS12 \ -keystore android-release.keystore \ -alias nanoloan-key \ -keyalg RSA \ -keysize 2048 \ -validity 10000
+"C:\Program Files\Java\jdk-17\bin\keytool.exe" -genkeypair \ -v \ -storetype PKCS12 \ -keystore android-release.keystore \ -alias nanoloan-key \ -keyalg RSA \ -keysize 2048 \ -validity 10000
 ```
 
 **For PowerShell:**

@@ -20,6 +20,7 @@
       "./plugins/android-release-signing.js",
       "./plugins/android-play-console-fixes.js",
       "./plugins/android-proguard-rules.js",
+      "./plugins/android-disable-lint.js",
       [
         "expo-navigation-bar",
         {
@@ -155,7 +156,8 @@
       "gradleProperties": {
         "android.enableDexingArtifactTransform.desugaring": "false",
         "android.packagingOptions.pickFirsts": "**/libc++_shared.so,**/libjsc.so,**/libfb.so,**/libhermes.so",
-        "android.packagingOptions.excludes": "META-INF/DEPENDENCIES,META-INF/LICENSE,META-INF/LICENSE.txt,META-INF/NOTICE,META-INF/NOTICE.txt"
+        "android.packagingOptions.excludes": "META-INF/DEPENDENCIES,META-INF/LICENSE,META-INF/LICENSE.txt,META-INF/NOTICE,META-INF/NOTICE.txt",
+        "android.lint.ignoreSupportLibraryWarnings": "true"
       },
       "extraGradlePlugins": [
         {
