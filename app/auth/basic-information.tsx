@@ -16,8 +16,8 @@ import {
   useLazyGetMeQuery,
 } from '@/shared/libs/redux/features/auth/authApi';
 import { useToast } from '@/shared/hooks/useToast';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { useAppSelector } from '@/shared/hooks/useAppSelector';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
+import { setLogout } from '@/shared/libs/redux/features/auth/authSlice';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
 const MARITAL_OPTIONS = ['Single', 'Married', 'Divorced', 'Widowed'];
@@ -137,10 +137,12 @@ const InputField = ({
 
 export default function BasicInformationScreen() {
   const insets = useSafeAreaInsets();
+  const dispatch = useAppDispatch();
   const [updateBasicInfo, { isLoading: isLoadingBasic }] = useUpdateBasicInfoMutation();
   const [updateProfile, { isLoading: isLoadingProfile }] = useUpdateProfileMutation();
   const [getMe, { isLoading: isLoadingFetch }] = useLazyGetMeQuery();
   const { showSuccess, showError } = useToast();
+  const { isAuthenticated, token } = useAppSelector((state) => state.auth);
 
   const [gender, setGender] = useState('');
   const [marital, setMarital] = useState('');
@@ -152,6 +154,14 @@ export default function BasicInformationScreen() {
   // Fetch user data on mount
   useEffect(() => {
     const fetchUserData = async () => {
+      // Check if user is authenticated before fetching
+      if (!isAuthenticated || !token) {
+        console.log('❌ User not authenticated, skipping fetch');
+        dispatch(setLogout());
+        router.replace('/(auth)/login' as any);
+        return;
+      }
+
       try {
         const response = await getMe().unwrap();
         const data = response.data;
@@ -175,14 +185,43 @@ export default function BasicInformationScreen() {
         if (data.profile?.passportNo) {
           setPassport(data.profile.passportNo);
         }
-      } catch {
-        // If no data found or error, start with empty form
-        console.log('No existing user data found, starting with empty form');
+      } catch (error: any) {
+        console.error('❌ Error fetching user data:', error);
+
+        // Handle 404 - User not found (auto logout)
+        if (error?.status === 404) {
+          console.log('❌ User not found (404) - auto-logging out...');
+          showError({
+            title: 'Session Expired',
+            message: 'Your account was not found. Please log in again.',
+          });
+          // Auto logout and redirect to login
+          dispatch(setLogout());
+          setTimeout(() => {
+            router.replace('/(auth)/login' as any);
+          }, 1500);
+          return;
+        }
+
+        // Handle 401 - Unauthorized (already handled by API interceptor, but log here too)
+        if (error?.status === 401) {
+          console.log('❌ Unauthorized access (401)');
+          return;
+        }
+
+        // Handle other errors - start with empty form
+        console.log('⚠️ Other error, starting with empty form');
+        if (error?.status !== 401) { // Don't show error for 401 as it's handled by API interceptor
+          showError({
+            title: 'Notice',
+            message: 'Could not load your existing data. Please fill out the form.',
+          });
+        }
       }
     };
 
     fetchUserData();
-  }, [getMe]);
+  }, [getMe, isAuthenticated, token, dispatch, showError]);
 
   // Clear error when user starts typing
   const clearError = (field: string) => {

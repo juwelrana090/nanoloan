@@ -221,3 +221,30 @@ export interface BiometricAddressVerifyResponse {
   id: string;
   status: string;
 }
+
+export interface BiometricFaceVerifyRequest {
+  faceImage: any; // React Native file object: { uri, name, type }
+}
+
+export interface BiometricFaceVerifyData {
+  confidence: number; // 0-1 confidence score
+  passed: boolean; // true if confidence >= 0.8
+  id?: string;
+  status?: string;
+}
+
+export interface BiometricFaceVerifyResponse {
+  confidence: number; // 0-1 confidence score
+  passed: boolean; // true if confidence >= 0.8
+  id?: string;
+  status?: string;
+}
+
+export interface BiometricStatusResponse {
+  idVerified: boolean;
+  addressVerified: boolean;
+  faceVerified: boolean;
+  overallStatus: 'PENDING' | 'IN_PROGRESS' | 'VERIFIED' | 'FAILED';
+  completedSteps?: string[];
+  pendingSteps?: string[];
+}

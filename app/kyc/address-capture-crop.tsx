@@ -7,6 +7,7 @@ import {
   PanResponder,
   Animated,
   Image as RNImage,
+  StyleSheet,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useRef, useEffect, useMemo } from 'react';
@@ -50,13 +51,12 @@ function CornerHandle({ pos, x, y, panHandlers, pulse }: CornerHandleProps) {
   const isLeft = pos === 'tl' || pos === 'bl';
   const isTop = pos === 'tl' || pos === 'tr';
 
-  // Bracket arms: horizontal + vertical lines meeting at the corner
   const hx1 = isLeft ? vs : 0;
-  const hx2 = isLeft ? vs / 2 : vs / 2;
+  const hx2 = vs / 2;
   const hy = vs / 2;
   const vx = vs / 2;
   const vy1 = isTop ? vs : 0;
-  const vy2 = isTop ? vs / 2 : vs / 2;
+  const vy2 = vs / 2;
 
   return (
     <Animated.View
@@ -154,18 +154,20 @@ export default function AddressCaptureCropScreen() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
+
   const [cropping, setCropping] = useState(false);
   const [crop, setCrop] = useState({ x: INIT.x, y: INIT.y, w: INIT.w, h: INIT.h });
 
-  // Refs for pan responders
-  const startRefTL = useRef({ x: 0, y: 0, w: 0, h: 0 });
-  const startRefTR = useRef({ x: 0, y: 0, w: 0, h: 0 });
-  const startRefBL = useRef({ x: 0, y: 0, w: 0, h: 0 });
-  const startRefBR = useRef({ x: 0, y: 0, w: 0, h: 0 });
-  const startRefBody = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  // ── cropRef: always holds the latest crop so pan responders never go stale ─
+  const cropRef = useRef(crop);
+  useEffect(() => {
+    cropRef.current = crop;
+  }, [crop]);
 
-  // Scan line animation
+  // ── Animations ────────────────────────────────────────────────────────────
   const scanAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -175,8 +177,6 @@ export default function AddressCaptureCropScreen() {
     ).start();
   }, []);
 
-  // Corner pulse animation
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
@@ -186,136 +186,132 @@ export default function AddressCaptureCropScreen() {
     ).start();
   }, []);
 
-  // ── Pan responders ──────────────────────────────────────────────────────────
-  const prTL = useMemo(() => {
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        startRefTL.current = { x: crop.x, y: crop.y, w: crop.w, h: crop.h };
-      },
-      onPanResponderMove: (_, g) => {
-        const { dx, dy } = g;
-        const s = startRefTL.current;
-        setCrop(() => {
-          let { x, y, w, h } = s;
-          x = Math.max(0, s.x + dx);
-          y = Math.max(80, s.y + dy);
-          w = Math.max(MIN_CROP, s.w - dx);
-          h = Math.max(MIN_CROP, s.h - dy);
-          return { x, y, w, h };
-        });
-      },
-    });
-  }, [crop]);
+  // ── Pan responders (created ONCE via useRef — never recreated) ─────────────
+  //    Each responder reads cropRef.current on grant so it always gets the
+  //    latest position without needing crop in its dependency array.
 
-  const prTR = useMemo(() => {
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        startRefTR.current = { x: crop.x, y: crop.y, w: crop.w, h: crop.h };
-      },
-      onPanResponderMove: (_, g) => {
-        const { dx, dy } = g;
-        const s = startRefTR.current;
-        setCrop(() => {
-          let { x, y, w, h } = s;
-          y = Math.max(80, s.y + dy);
-          w = Math.max(MIN_CROP, s.w + dx);
-          h = Math.max(MIN_CROP, s.h - dy);
-          return { x, y, w, h };
-        });
-      },
-    });
-  }, [crop]);
+  const startTL = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const startTR = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const startBL = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const startBR = useRef({ x: 0, y: 0, w: 0, h: 0 });
+  const startBody = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
-  const prBL = useMemo(() => {
-    return PanResponder.create({
+  const prTL = useRef(
+    PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        startRefBL.current = { x: crop.x, y: crop.y, w: crop.w, h: crop.h };
+        startTL.current = { ...cropRef.current };
       },
-      onPanResponderMove: (_, g) => {
-        const { dx, dy } = g;
-        const s = startRefBL.current;
-        setCrop(() => {
-          let { x, y, w, h } = s;
-          x = Math.max(0, s.x + dx);
-          w = Math.max(MIN_CROP, s.w - dx);
-          h = Math.max(MIN_CROP, s.h + dy);
-          return { x, y, w, h };
+      onPanResponderMove: (_, { dx, dy }) => {
+        const s = startTL.current;
+        setCrop({
+          x: Math.max(0, s.x + dx),
+          y: Math.max(80, s.y + dy),
+          w: Math.max(MIN_CROP, s.w - dx),
+          h: Math.max(MIN_CROP, s.h - dy),
         });
       },
-    });
-  }, [crop]);
+    })
+  ).current;
 
-  const prBR = useMemo(() => {
-    return PanResponder.create({
+  const prTR = useRef(
+    PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        startRefBR.current = { x: crop.x, y: crop.y, w: crop.w, h: crop.h };
+        startTR.current = { ...cropRef.current };
       },
-      onPanResponderMove: (_, g) => {
-        const { dx, dy } = g;
-        const s = startRefBR.current;
-        setCrop(() => {
-          let { x, y, w, h } = s;
-          w = Math.max(MIN_CROP, s.w + dx);
-          h = Math.max(MIN_CROP, s.h + dy);
-          return { x, y, w, h };
+      onPanResponderMove: (_, { dx, dy }) => {
+        const s = startTR.current;
+        setCrop({
+          x: s.x,
+          y: Math.max(80, s.y + dy),
+          w: Math.max(MIN_CROP, s.w + dx),
+          h: Math.max(MIN_CROP, s.h - dy),
         });
       },
-    });
-  }, [crop]);
+    })
+  ).current;
 
-  const prBody = useMemo(() => {
-    return PanResponder.create({
+  const prBL = useRef(
+    PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        startRefBody.current = { x: crop.x, y: crop.y, w: crop.w, h: crop.h };
+        startBL.current = { ...cropRef.current };
       },
-      onPanResponderMove: (_, g) => {
-        const { dx, dy } = g;
-        const s = startRefBody.current;
-        setCrop(() => {
-          let { x, y, w, h } = s;
-          x = Math.max(0, Math.min(SW - s.w, s.x + dx));
-          y = Math.max(80, Math.min(SH - s.h - 120, s.y + dy));
-          return { x, y, w, h };
+      onPanResponderMove: (_, { dx, dy }) => {
+        const s = startBL.current;
+        setCrop({
+          x: Math.max(0, s.x + dx),
+          y: s.y,
+          w: Math.max(MIN_CROP, s.w - dx),
+          h: Math.max(MIN_CROP, s.h + dy),
         });
       },
-    });
-  }, [crop]);
+    })
+  ).current;
+
+  const prBR = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        startBR.current = { ...cropRef.current };
+      },
+      onPanResponderMove: (_, { dx, dy }) => {
+        const s = startBR.current;
+        setCrop({
+          x: s.x,
+          y: s.y,
+          w: Math.max(MIN_CROP, s.w + dx),
+          h: Math.max(MIN_CROP, s.h + dy),
+        });
+      },
+    })
+  ).current;
+
+  const prBody = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        startBody.current = { ...cropRef.current };
+      },
+      onPanResponderMove: (_, { dx, dy }) => {
+        const s = startBody.current;
+        setCrop({
+          x: Math.max(0, Math.min(SW - s.w, s.x + dx)),
+          y: Math.max(80, Math.min(SH - s.h - 120, s.y + dy)),
+          w: s.w,
+          h: s.h,
+        });
+      },
+    })
+  ).current;
 
   // ── Crop action ────────────────────────────────────────────────────────────
   const handleCrop = async () => {
     setCropping(true);
     try {
-      // Get image dimensions
-      const [imageWidth, imageHeight] = await new Promise<number[]>((resolve, reject) => {
-        RNImage.getSize(
-          uri,
-          (width: number, height: number) => resolve([width, height]),
-          (error: any) => reject(error)
-        );
+      const [imgW, imgH] = await new Promise<number[]>((resolve, reject) => {
+        RNImage.getSize(uri, (w, h) => resolve([w, h]), reject);
       });
 
-      const scaleX = imageWidth / SW;
-      const scaleY = imageHeight / SH;
+      const scaleX = imgW / SW;
+      const scaleY = imgH / SH;
+      const c = cropRef.current;
 
       const result = await manipulateAsync(
         uri,
         [
           {
             crop: {
-              originX: Math.max(0, Math.round(crop.x * scaleX)),
-              originY: Math.max(0, Math.round(crop.y * scaleY)),
-              width: Math.round(crop.w * scaleX),
-              height: Math.round(crop.h * scaleY),
+              originX: Math.max(0, Math.round(c.x * scaleX)),
+              originY: Math.max(0, Math.round(c.y * scaleY)),
+              width: Math.min(imgW, Math.round(c.w * scaleX)),
+              height: Math.min(imgH, Math.round(c.h * scaleY)),
             },
           },
         ],
@@ -333,48 +329,42 @@ export default function AddressCaptureCropScreen() {
     }
   };
 
-  // ── Derived values ─────────────────────────────────────────────────────────
+  // ── Derived ────────────────────────────────────────────────────────────────
   const { x, y, w, h } = crop;
   const right = x + w;
   const bottom = y + h;
 
-  const scanY = useMemo(() => {
-    return scanAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [y, bottom - 2],
-    });
-  }, [scanAnim, y, bottom]);
+  const scanY = useMemo(
+    () => scanAnim.interpolate({ inputRange: [0, 1], outputRange: [y, bottom - 2] }),
+    [y, bottom]
+  );
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <View className="flex-1 bg-black">
-      {/* Background image */}
-      <Image source={{ uri }} className="absolute inset-0" contentFit="contain" />
+      {/* ── Background image: must use style prop for dimensions ── */}
+      <Image source={{ uri }} style={StyleSheet.absoluteFillObject} contentFit="cover" />
 
       {/* ── Dark vignette outside crop ── */}
-      {/* top */}
       <View
         style={{ position: 'absolute', top: 0, left: 0, right: 0, height: y }}
-        className="bg-black/60"
+        className="bg-black/55"
         pointerEvents="none"
       />
-      {/* bottom */}
       <View
         style={{ position: 'absolute', top: bottom, left: 0, right: 0, bottom: 0 }}
-        className="bg-black/60"
+        className="bg-black/55"
         pointerEvents="none"
       />
-      {/* left */}
       <View
         style={{ position: 'absolute', top: y, left: 0, width: x, height: h }}
-        className="bg-black/60"
+        className="bg-black/55"
         pointerEvents="none"
       />
-      {/* right */}
       <View
         style={{ position: 'absolute', top: y, left: right, right: 0, height: h }}
-        className="bg-black/60"
+        className="bg-black/55"
         pointerEvents="none"
       />
 
@@ -387,12 +377,12 @@ export default function AddressCaptureCropScreen() {
           width: w,
           height: h,
           borderWidth: 1.5,
-          borderColor: 'rgba(255,255,255,0.5)',
+          borderColor: 'rgba(255,255,255,0.55)',
         }}
         pointerEvents="none"
       />
 
-      {/* ── Rule-of-thirds grid ── */}
+      {/* ── Grid ── */}
       <GridLines x={x} y={y} w={w} h={h} />
 
       {/* ── Scan line ── */}
@@ -409,7 +399,7 @@ export default function AddressCaptureCropScreen() {
         }}
       />
 
-      {/* ── Draggable body (reposition entire crop) ── */}
+      {/* ── Body drag zone ── */}
       <View
         style={{ position: 'absolute', left: x + 30, top: y + 30, width: w - 60, height: h - 60 }}
         {...prBody.panHandlers}
@@ -427,23 +417,22 @@ export default function AddressCaptureCropScreen() {
         pulse={pulseAnim}
       />
 
-      {/* ── Live dimension badge ── */}
+      {/* ── Dimension badge ── */}
       <View
         pointerEvents="none"
-        style={{ position: 'absolute', left: x + w / 2 - 40, top: y - 28 }}
-        className="rounded-lg bg-black/60 px-3 py-1">
+        style={{ position: 'absolute', left: x + w / 2 - 36, top: y - 28 }}
+        className="rounded-lg bg-black/65 px-3 py-1">
         <Text className="text-[11px] font-semibold tracking-wide text-white">
           {Math.round(w)} × {Math.round(h)}
         </Text>
       </View>
 
-      {/* ══════════════════════════════════════════════
+      {/* ══════════════════════════════════════
           TOP BAR
-      ══════════════════════════════════════════════ */}
+      ══════════════════════════════════════ */}
       <View
         style={{ paddingTop: insets.top + 10 }}
         className="absolute left-0 right-0 top-0 z-30 flex-row items-center justify-between bg-black/55 px-4 pb-3">
-        {/* Cancel */}
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.7}
@@ -451,13 +440,11 @@ export default function AddressCaptureCropScreen() {
           <Text className="text-[15px] font-medium text-white/80">Cancel</Text>
         </TouchableOpacity>
 
-        {/* Title */}
         <View className="items-center">
           <Text className="text-[16px] font-bold tracking-wide text-white">Crop Document</Text>
           <Text className="mt-0.5 text-[11px] text-white/55">Drag corners to adjust</Text>
         </View>
 
-        {/* Done button */}
         <TouchableOpacity
           onPress={handleCrop}
           disabled={cropping}
@@ -473,47 +460,44 @@ export default function AddressCaptureCropScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* ══════════════════════════════════════════════
+      {/* ══════════════════════════════════════
           BOTTOM TOOLBAR
-      ══════════════════════════════════════════════ */}
+      ══════════════════════════════════════ */}
       <View
         style={{ paddingBottom: insets.bottom + 12 }}
         className="absolute bottom-0 left-0 right-0 z-30 flex-row items-center justify-between bg-black/70 px-6 pt-4">
-        {/* Reset */}
         <TouchableOpacity
           onPress={() => setCrop({ x: INIT.x, y: INIT.y, w: INIT.w, h: INIT.h })}
           activeOpacity={0.7}
-          className="min-w-[56px] items-center gap-1">
+          className="min-w-[56px] items-center">
           <ResetIcon />
-          <Text className="mt-1 text-[11px] font-medium text-white/75">Reset</Text>
+          <Text className="mt-1.5 text-[11px] font-medium text-white/75">Reset</Text>
         </TouchableOpacity>
 
-        {/* Tip chip */}
         <View className="rounded-full border border-white/15 bg-white/10 px-4 py-1.5">
           <Text className="text-center text-[11px] text-white/65">
             Drag corners · Move to reposition
           </Text>
         </View>
 
-        {/* Skip */}
         <TouchableOpacity
           onPress={() => {
             dispatch(setAddressImage(uri));
             router.push({ pathname: '/kyc/address-capture-preview', params: { uri } });
           }}
           activeOpacity={0.7}
-          className="min-w-[56px] items-center gap-1">
+          className="min-w-[56px] items-center">
           <SkipIcon />
-          <Text className="mt-1 text-[11px] font-medium text-white/75">Skip</Text>
+          <Text className="mt-1.5 text-[11px] font-medium text-white/75">Skip</Text>
         </TouchableOpacity>
       </View>
 
       {/* ── Loading overlay ── */}
       {cropping && (
         <View className="absolute inset-0 z-50 items-center justify-center bg-black/60">
-          <View className="items-center gap-3 rounded-2xl border border-white/10 bg-[#1A1A1A] px-10 py-7">
+          <View className="items-center rounded-2xl border border-white/10 bg-[#1A1A1A] px-10 py-7">
             <ActivityIndicator size="large" color={ACCENT} />
-            <Text className="mt-1 text-[15px] font-semibold text-white">Cropping…</Text>
+            <Text className="mt-3 text-[15px] font-semibold text-white">Cropping…</Text>
           </View>
         </View>
       )}

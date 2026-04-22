@@ -2,6 +2,9 @@ import { apiSlice } from '@/shared/libs/redux/apiSlice';
 import type {
   AddAddressRequest,
   ApiSuccessResponse,
+  BiometricFaceVerifyData,
+  BiometricFaceVerifyRequest,
+  BiometricStatusResponse,
   ChangePasswordRequest,
   CheckAvailabilityResponse,
   DeleteAccountRequest,
@@ -38,7 +41,7 @@ export const authApi = apiSlice.injectEndpoints({
         body: data,
       }),
     }),
-    verifyEmail: builder.mutation<void, VerifyEmailRequest>({
+    verifyEmail: builder.mutation<LoginResponse, VerifyEmailRequest>({
       query: (data) => ({
         url: '/auth/verify-email',
         method: 'POST',
@@ -125,7 +128,7 @@ export const authApi = apiSlice.injectEndpoints({
       }),
     }),
     // ─── Address Management ────────────────────────────────────────────────────────
-    getAddresses: builder.query<ApiSuccessResponse<Address[]>, void>({
+    getAddresses: builder.query<ApiSuccessResponse<{ addresses: Address[] }>, void>({
       query: () => ({
         url: '/users/me/addresses',
         method: 'GET',
@@ -162,6 +165,23 @@ export const authApi = apiSlice.injectEndpoints({
         method: 'DELETE',
       }),
     }),
+    // ─── Face Verification ────────────────────────────────────────────────────────
+    faceVerify: builder.mutation<ApiSuccessResponse<BiometricFaceVerifyData>, BiometricFaceVerifyRequest>({
+      query: (data) => ({
+        url: '/biometric/face-verify',
+        method: 'POST',
+        body: data,
+        formData: true, // Indicate this is FormData
+      }),
+    }),
+    // ─── Biometric Status Check ───────────────────────────────────────────────────
+    getBiometricStatus: builder.query<ApiSuccessResponse<BiometricStatusResponse>, void>({
+      query: () => ({
+        url: '/biometric/status',
+        method: 'GET',
+      }),
+      providesTags: ['user'],
+    }),
   }),
 });
 
@@ -189,4 +209,7 @@ export const {
   useUpdateAddressMutation,
   useRegisterFingerprintMutation,
   useDeleteFingerprintMutation,
+  useFaceVerifyMutation,
+  useGetBiometricStatusQuery,
+  useLazyGetBiometricStatusQuery,
 } = authApi;

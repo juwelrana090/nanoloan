@@ -21,7 +21,7 @@ export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('8801');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,7 +31,14 @@ export default function RegisterScreen() {
 
   const handleSignUp = () => {
     setLocalError(null);
-    if (!fullName.trim() || !email.trim() || !username.trim() || !phoneNumber.trim() || !dateOfBirth.trim() || !password) {
+    if (
+      !fullName.trim() ||
+      !email.trim() ||
+      !username.trim() ||
+      !phoneNumber.trim() ||
+      !dateOfBirth.trim() ||
+      !password
+    ) {
       setLocalError('Please fill in all fields.');
       return;
     }
@@ -41,6 +48,11 @@ export default function RegisterScreen() {
     }
     if (password.length < 8) {
       setLocalError('Password must be at least 8 characters.');
+      return;
+    }
+    const bdPhoneRegex = /^8801[3-9]\d{8}$/;
+    if (!bdPhoneRegex.test(phoneNumber.trim())) {
+      setLocalError('Please enter a valid Bangladeshi phone number (e.g., 8801800000000).');
       return;
     }
     register({
@@ -61,33 +73,28 @@ export default function RegisterScreen() {
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
-
       {/* Header */}
-      <View className="pb-10 items-center">
-        <Text className="text-[28px] font-bold text-[#0D2B1E]">
-          Create Account
-        </Text>
+      <View className="items-center pb-10">
+        <Text className="text-[28px] font-bold text-[#0D2B1E]">Create Account</Text>
       </View>
 
       {/* White card */}
-      <View className="flex-1 bg-[#F0FFF4] rounded-tl-[40px] rounded-tr-[40px]">
+      <View className="flex-1 rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4]">
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 32 }}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-
+          keyboardShouldPersistTaps="handled">
           {/* Error message */}
           {displayError ? (
-            <View className="mb-4 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
+            <View className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
               <Text className="text-[13px] text-red-600">{displayError}</Text>
             </View>
           ) : null}
 
           {/* Full Name */}
           <View className="mb-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Full Name</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 justify-center">
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">Full Name</Text>
+            <View className="h-[52px] justify-center rounded-full bg-[#E4F7EE] px-5">
               <TextInput
                 value={fullName}
                 onChangeText={setFullName}
@@ -101,8 +108,8 @@ export default function RegisterScreen() {
 
           {/* Email */}
           <View className="mb-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Email</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 justify-center">
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">Email</Text>
+            <View className="h-[52px] justify-center rounded-full bg-[#E4F7EE] px-5">
               <TextInput
                 value={email}
                 onChangeText={setEmail}
@@ -118,8 +125,8 @@ export default function RegisterScreen() {
 
           {/* Username */}
           <View className="mb-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Username</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 justify-center">
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">Username</Text>
+            <View className="h-[52px] justify-center rounded-full bg-[#E4F7EE] px-5">
               <TextInput
                 value={username}
                 onChangeText={setUsername}
@@ -134,8 +141,10 @@ export default function RegisterScreen() {
 
           {/* Mobile Number */}
           <View className="mb-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Mobile Number</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 justify-center">
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">
+              Mobile Number
+            </Text>
+            <View className="h-[52px] justify-center rounded-full bg-[#E4F7EE] px-5">
               <TextInput
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
@@ -150,18 +159,16 @@ export default function RegisterScreen() {
 
           {/* Date Of Birth */}
           <View className="mb-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Date Of Birth</Text>
-            <DatePickerField
-              value={dateOfBirth}
-              onChange={setDateOfBirth}
-              disabled={isLoading}
-            />
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">
+              Date Of Birth
+            </Text>
+            <DatePickerField value={dateOfBirth} onChange={setDateOfBirth} disabled={isLoading} />
           </View>
 
           {/* Password */}
           <View className="mb-4">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Password</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 flex-row items-center justify-between">
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">Password</Text>
+            <View className="h-[52px] flex-row items-center justify-between rounded-full bg-[#E4F7EE] px-5">
               <TextInput
                 value={password}
                 onChangeText={setPassword}
@@ -172,15 +179,21 @@ export default function RegisterScreen() {
                 editable={!isLoading}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
-                <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={22} color="#00C897" />
+                <Ionicons
+                  name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={22}
+                  color="#00C897"
+                />
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Confirm Password */}
           <View className="mb-6">
-            <Text className="text-[15px] font-semibold text-[#1A1A1A] ml-1 mb-2">Confirm Password</Text>
-            <View className="h-[52px] bg-[#E4F7EE] rounded-full px-5 flex-row items-center justify-between">
+            <Text className="mb-2 ml-1 text-[15px] font-semibold text-[#1A1A1A]">
+              Confirm Password
+            </Text>
+            <View className="h-[52px] flex-row items-center justify-between rounded-full bg-[#E4F7EE] px-5">
               <TextInput
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -190,16 +203,22 @@ export default function RegisterScreen() {
                 className="flex-1 text-[15px] text-[#1A1A1A]"
                 editable={!isLoading}
               />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} activeOpacity={0.7}>
-                <Ionicons name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'} size={22} color="#00C897" />
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                activeOpacity={0.7}>
+                <Ionicons
+                  name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
+                  size={22}
+                  color="#00C897"
+                />
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Terms & Privacy */}
-          <View className="items-center mb-5">
-            <Text className="text-[13px] text-[#888] text-center">By continuing, you agree to</Text>
-            <Text className="text-[13px] text-center">
+          <View className="mb-5 items-center">
+            <Text className="text-center text-[13px] text-[#888]">By continuing, you agree to</Text>
+            <Text className="text-center text-[13px]">
               <Text className="font-bold text-[#1A1A1A]">Terms of Use </Text>
               <Text className="text-[#888]">and </Text>
               <Text className="font-bold text-[#1A1A1A]">Privacy Policy.</Text>
@@ -211,8 +230,7 @@ export default function RegisterScreen() {
             onPress={handleSignUp}
             disabled={isLoading}
             activeOpacity={0.8}
-            className="h-[54px] bg-[#00C897] rounded-full items-center justify-center mb-5"
-          >
+            className="mb-5 h-[54px] items-center justify-center rounded-full bg-[#00C897]">
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
@@ -224,12 +242,11 @@ export default function RegisterScreen() {
           <View className="items-center">
             <Text className="text-[13px] text-[#888]">
               Already have an account?{' '}
-              <Text className="text-[#00C897] font-semibold" onPress={handleLogin}>
+              <Text className="font-semibold text-[#00C897]" onPress={handleLogin}>
                 Log In
               </Text>
             </Text>
           </View>
-
         </ScrollView>
       </View>
     </View>

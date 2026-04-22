@@ -1,9 +1,19 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useState, useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useAddAddressMutation, useLazyGetAddressesQuery } from '@/shared/libs/redux/features/auth/authApi';
+import {
+  useAddAddressMutation,
+  useLazyGetAddressesQuery,
+} from '@/shared/libs/redux/features/auth/authApi';
 import { useToast } from '@/shared/hooks/useToast';
 
 const TYPE_OPTIONS = ['Home', 'Work', 'Other'];
@@ -18,8 +28,18 @@ const STATE_OPTIONS = [
 
 // Address step: 1 = Permanent, 2 = Present
 const ADDRESS_STEPS = [
-  { step: 1, title: 'Add Permanent Address', subtitle: 'Your permanent residential address', type: 'PERMANENT' },
-  { step: 2, title: 'Add Present Address', subtitle: 'Your current residential address', type: 'PRESENT' },
+  {
+    step: 1,
+    title: 'Add Permanent Address',
+    subtitle: 'Your permanent residential address',
+    type: 'PERMANENT',
+  },
+  {
+    step: 2,
+    title: 'Add Present Address',
+    subtitle: 'Your current residential address',
+    type: 'PRESENT',
+  },
 ];
 
 interface DropdownProps {
@@ -76,7 +96,14 @@ interface InputFieldProps {
   error?: string;
 }
 
-const InputField = ({ label, placeholder, value, onChange, keyboardType, error }: InputFieldProps) => (
+const InputField = ({
+  label,
+  placeholder,
+  value,
+  onChange,
+  keyboardType,
+  error,
+}: InputFieldProps) => (
   <View className="mb-5">
     <Text className="mb-2 text-[15px] font-semibold text-[#1A1A1A]">{label}</Text>
     <View className="h-[52px] justify-center rounded-full bg-[#E4F7EE] px-5">
@@ -115,10 +142,13 @@ export default function AddressesUpdateScreen() {
     const fetchAddresses = async () => {
       try {
         const response = await getAddresses().unwrap();
-        const addresses = response.data || [];
+        const addresses = response.data?.addresses || [];
 
         const permanent = addresses.find((addr: any) => addr.type === 'PERMANENT');
         const present = addresses.find((addr: any) => addr.type === 'PRESENT');
+
+        console.log('permanent address', permanent);
+        console.log('present address', present);
 
         // If both addresses exist, skip to next screen
         if (permanent && present) {
@@ -216,7 +246,9 @@ export default function AddressesUpdateScreen() {
 
       showSuccess({
         title: 'Success',
-        message: response.message || `${currentStep === 1 ? 'Permanent' : 'Present'} address added successfully`,
+        message:
+          response.message ||
+          `${currentStep === 1 ? 'Permanent' : 'Present'} address added successfully`,
       });
 
       if (currentStep === 1) {
@@ -265,20 +297,16 @@ export default function AddressesUpdateScreen() {
         <Text className="text-[28px] font-bold text-[#0D2B1E]">
           {ADDRESS_STEPS[currentStep - 1].title}
         </Text>
-        <Text className="text-[14px] text-[#0D2B1E] mt-1">
+        <Text className="mt-1 text-[14px] text-[#0D2B1E]">
           {ADDRESS_STEPS[currentStep - 1].subtitle}
         </Text>
         {/* Step indicator */}
         <View className="mt-4 flex-row items-center">
           <View
-            className={`h-2 flex-1 rounded-full ${
-              currentStep >= 1 ? 'bg-white' : 'bg-white/30'
-            }`}
+            className={`h-2 flex-1 rounded-full ${currentStep >= 1 ? 'bg-white' : 'bg-white/30'}`}
           />
           <View
-            className={`h-2 flex-1 rounded-full ${
-              currentStep >= 2 ? 'bg-white' : 'bg-white/30'
-            }`}
+            className={`h-2 flex-1 rounded-full ${currentStep >= 2 ? 'bg-white' : 'bg-white/30'}`}
           />
         </View>
       </View>
