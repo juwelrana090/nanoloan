@@ -83,11 +83,7 @@ function statusMessage(s: Status): string {
 
 function OvalGuide({ status }: { status: Status }) {
   const color =
-    status === 'success'
-      ? ACCENT
-      : status === 'no_face'
-        ? '#EF5350'
-        : 'rgba(255,255,255,0.4)';
+    status === 'success' ? ACCENT : status === 'no_face' ? '#EF5350' : 'rgba(255,255,255,0.4)';
 
   return (
     <Svg width={SW} height={SH} style={StyleSheet.absoluteFillObject} pointerEvents="none">
@@ -132,11 +128,21 @@ export default function FacialRecognitionScreen() {
   const [status, setStatus] = useState<Status>('ready');
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
-  const [faceVerifyData, setFaceVerifyData] = useState<{ confidence: number; passed: boolean } | null>(null);
+  const [faceVerifyData, setFaceVerifyData] = useState<{
+    confidence: number;
+    passed: boolean;
+  } | null>(null);
 
   const [verifyFace, { isLoading: isVerifying }] = useFaceVerifyMutation();
 
-  console.log('📸 Permission state:', permission?.granted, 'Status:', status, 'Camera ready:', isCameraReady);
+  console.log(
+    '📸 Permission state:',
+    permission?.granted,
+    'Status:',
+    status,
+    'Camera ready:',
+    isCameraReady
+  );
 
   // ── Validate captured image has a face ─────────────────────────────────────
   const validateFaceInImage = async (uri: string): Promise<boolean> => {
@@ -158,7 +164,14 @@ export default function FacialRecognitionScreen() {
   // ── Capture picture with face validation ────────────────────────────────────
   const handleCapture = useCallback(async () => {
     if (!cameraRef.current || !isCameraReady || status === 'capturing' || status === 'validating') {
-      console.log('Capture blocked - cameraRef:', !!cameraRef.current, 'isCameraReady:', isCameraReady, 'status:', status);
+      console.log(
+        'Capture blocked - cameraRef:',
+        !!cameraRef.current,
+        'isCameraReady:',
+        isCameraReady,
+        'status:',
+        status
+      );
       return;
     }
 
@@ -238,25 +251,31 @@ export default function FacialRecognitionScreen() {
       setStatus('validating');
 
       try {
-        // Prepare face image file object
-        const faceImageFile = {
-          uri: cropped.uri,
-          name: 'face.jpg',
-          type: 'image/jpeg',
-        } as any;
+        // Prepare face image data object (matches BiometricFaceVerifyRequest type)
+        const faceImageData = {
+          faceImage: {
+            uri: cropped.uri,
+            name: 'face.jpg',
+            type: 'image/jpeg',
+          },
+        };
 
         // Call the face verification API
-        const response = await verifyFace({ faceImage: faceImageFile }).unwrap();
+        const response = await verifyFace(faceImageData as any).unwrap();
         console.log('✅ Face verification response:', response);
 
         const { confidence, passed } = response.data;
         setFaceVerifyData({ confidence, passed });
 
         if (passed) {
-          console.log(`✅ Face verified successfully with ${Math.round(confidence * 100)}% confidence`);
+          console.log(
+            `✅ Face verified successfully with ${Math.round(confidence * 100)}% confidence`
+          );
           setStatus('success');
         } else {
-          console.log(`❌ Face verification failed with ${Math.round(confidence * 100)}% confidence (threshold: 80%)`);
+          console.log(
+            `❌ Face verification failed with ${Math.round(confidence * 100)}% confidence (threshold: 80%)`
+          );
           setStatus('no_face');
           Alert.alert(
             'Face Verification Failed',
@@ -272,14 +291,10 @@ export default function FacialRecognitionScreen() {
         setStatus('no_face');
 
         const errorMsg = apiError?.data?.message || 'Face verification failed. Please try again.';
-        Alert.alert(
-          'Verification Error',
-          errorMsg,
-          [
-            { text: 'Try Again', onPress: () => setStatus('ready') },
-            { text: 'Cancel', onPress: () => router.back(), style: 'cancel' },
-          ]
-        );
+        Alert.alert('Verification Error', errorMsg, [
+          { text: 'Try Again', onPress: () => setStatus('ready') },
+          { text: 'Cancel', onPress: () => router.back(), style: 'cancel' },
+        ]);
       }
     } catch (err: any) {
       console.error('Capture error:', err);
@@ -322,11 +337,7 @@ export default function FacialRecognitionScreen() {
               strokeWidth={2}
               strokeLinecap="round"
             />
-            <Path
-              d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
-              stroke={ACCENT}
-              strokeWidth={2}
-            />
+            <Path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke={ACCENT} strokeWidth={2} />
           </Svg>
         </View>
         <Text className="mb-2 text-center text-[20px] font-bold text-white">
@@ -483,7 +494,9 @@ export default function FacialRecognitionScreen() {
         {/* Shutter button */}
         <TouchableOpacity
           onPress={handleCapture}
-          disabled={!isCameraReady || status === 'capturing' || status === 'validating' || isVerifying}
+          disabled={
+            !isCameraReady || status === 'capturing' || status === 'validating' || isVerifying
+          }
           activeOpacity={0.8}
           className={`mb-5 h-[72px] w-[72px] items-center justify-center rounded-full border-4 ${
             !isCameraReady || status === 'capturing' || status === 'validating' || isVerifying
@@ -498,7 +511,7 @@ export default function FacialRecognitionScreen() {
         </TouchableOpacity>
 
         {/* Tips */}
-        <View className="w-full rounded-2xl bg-black-50 px-5 py-4 bg-black/50">
+        <View className="bg-black-50 w-full rounded-2xl bg-black/50 px-5 py-4">
           <Text className="mb-2 text-[13px] font-semibold text-white">Tips for best results:</Text>
           {[
             'Ensure your face is well-lit with no shadows',

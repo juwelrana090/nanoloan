@@ -24,7 +24,6 @@ const baseQuery = fetchBaseQuery({
 
             headers.delete('Content-Type');
             headers.set('Accept', 'application/json');
-            headers.set('Content-Type', 'application/json');
 
             if (token) {
                 headers.set('Authorization', `Bearer ${token}`);
@@ -39,14 +38,42 @@ const baseQuery = fetchBaseQuery({
 });
 
 const baseQueryWithAutoLogout = async (args: any, api: any, extraOptions: any) => {
+    // Handle FormData conversion if formData flag is set
+    let processedArgs = args;
+    if (args && typeof args === 'object' && args.formData && args.body) {
+        // Convert body object to FormData
+        const formData = new FormData();
+        Object.keys(args.body).forEach(key => {
+            const value = args.body[key];
+            if (value && typeof value === 'object' && value.uri) {
+                // File object - append as file
+                formData.append(key, {
+                    uri: value.uri,
+                    name: value.name || 'file.jpg',
+                    type: value.type || 'image/jpeg',
+                } as any);
+            } else {
+                // Regular value - append as is
+                formData.append(key, value);
+            }
+        });
+
+        // Update args with FormData and remove formData flag
+        processedArgs = {
+            ...args,
+            body: formData,
+            formData: undefined,
+        };
+    }
+
     console.log('🚀 Making API Request:', {
-        url: typeof args === 'string' ? args : args.url,
-        method: typeof args === 'string' ? 'GET' : args.method,
+        url: typeof processedArgs === 'string' ? processedArgs : processedArgs.url,
+        method: typeof processedArgs === 'string' ? 'GET' : processedArgs.method,
         baseUrl: `${apiUrl}/v1`
     });
 
     try {
-        const result = await baseQuery(args, api, extraOptions);
+        const result = await baseQuery(processedArgs, api, extraOptions);
 
         console.log('📥 API Response:', {
             success: !result.error,

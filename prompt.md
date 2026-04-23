@@ -1,252 +1,372 @@
-# Task: Implement `facial-recognition.tsx` — KYC Facial Recognition Screen
+📋 Backend API Endpoints - Complete Guide
+🎯 Updated API Endpoints
+Your backend now has 4 main endpoints for biometric verification:
 
-## Context
+read all:
+app\kyc\id-capture-preview.tsx
+app\kyc\address-capture-preview.tsx
+app\kyc\facial-recognition.tsx
+app\kyc\verified.tsx
 
-You are working on a **React Native Expo KYC flow** (TypeScript, NativeWind/Tailwind CSS).
-The project uses `expo-router`, `expo-camera`, `expo-face-detector`, `expo-image-manipulator`,
-`expo-image`, `react-redux`, and `react-native-svg`.
-Redux slice is at `@/shared/libs/redux/features/kyc/kycSlice` and must expose `setFaceImage`.
-Route after success: `/kyc/verified`.
+shared\config\index.ts
 
----
+Base URL: https://backend-nanoloan.giize.com (API Gateway)
+1️⃣ ID Card Verification
+Endpoint
 
-## Objective
+POST /biometric/id-verify
+Request
 
-Replace the existing static `facial-recognition.tsx` with a **fully working** screen that:
+Content-Type: multipart/form-data
+Authorization: Bearer <JWT_TOKEN>
 
-1. Opens the **front-facing live camera** via `expo-camera` `CameraView`
-2. Runs **real-time face detection** via `expo-face-detector` `onFacesDetected`
-3. Enforces a **3-step liveness check** to reject spoofed / non-human images
-4. **Auto-captures** when liveness is complete
-5. Shows a **success screen** with the cropped face preview before proceeding
+FormData {
+idType: "NID" | "PASSPORT",
+idCardImage: File (image/jpeg, max 10MB)
+}
+Backend Logic
 
----
+1. Authenticate user from JWT token
+2. Validate file size (max 10MB)
+3. Convert image to buffer
+4. OCR Processing:
+   - Preprocess image (grayscale + contrast)
+   - Extract text using Tesseract.js (Bangla + English)
+   - Get confidence score
+5. Parse Document:
+   - If NID: Extract name, ID number, DOB, address
+   - If Passport: Extract name, passport number, DOB, expiry
+6. Validate extracted data
+7. Store in Database:
+   - Create/Update BiometricVerification record
+   - Save raw OCR text + extracted data
+   - Update User.idVerified flag
+8. Log verification attempt
+9. Return response
+   Response
 
-## Install (if not already present)
+{
+"success": true,
+"message": "ID card submitted for verification",
+"data": {
+"id": "uuid-of-verification-record",
+"status": "VERIFIED" | "PENDING_MANUAL_REVIEW",
+"ocrData": {
+"name": "John Doe",
+"nameBangla": "জন ডো",
+"idNumber": "1234567890123",
+"dob": "1990-01-15",
+"address": "123 Main Street, Dhaka",
+"issueDate": "2020-01-01",
+"expiryDate": "2030-01-01"
+}
+}
+}
+2️⃣ Address Verification
+Endpoint
 
-```bash
-npx expo install expo-face-detector
-```
+POST /biometric/address-verify
+Request
 
----
+Content-Type: multipart/form-data
+Authorization: Bearer <JWT_TOKEN>
 
-## Screen states (implement all)
+FormData {
+addressImage: File (image/jpeg, max 10MB)
+}
+Backend Logic
 
-| State       | Meaning                                        |
-| ----------- | ---------------------------------------------- |
-| `waiting`   | No face detected — show idle oval              |
-| `detected`  | Face found but not centered or wrong size      |
-| `centered`  | Face correctly positioned — liveness running   |
-| `capturing` | `takePictureAsync` in progress                 |
-| `success`   | Photo captured — show preview + Continue btn   |
-| `no_face`   | Capture succeeded but post-check found no face |
+1. Authenticate user from JWT token
+2. Validate file size (max 10MB)
+3. Convert image to buffer
+4. OCR Processing:
+   - Preprocess image
+   - Extract text using Tesseract.js
+   - Get confidence score
+5. Detect Document Type:
+   - UTILITY_BILL (electricity, gas, water)
+   - BANK_STATEMENT
+   - LEASE_AGREEMENT
+   - GOVT_LETTER
+6. Extract Address Data:
+   - Name, address, issue date
+7. Validate extracted data
+8. Store in Database:
+   - Update BiometricVerification record
+   - Save raw OCR text + extracted data
+   - Update User.addressVerified flag
+9. Log verification attempt
+10. Return response
+    Response
 
----
+{
+"success": true,
+"message": "Address document submitted for verification",
+"data": {
+"id": "uuid-of-verification-record",
+"status": "VERIFIED" | "PENDING_MANUAL_REVIEW",
+"documentType": "UTILITY_BILL"
+}
+}
+3️⃣ Face Verification ⭐
+Endpoint
 
-## Liveness check (anti-spoof — implement exactly in this order)
+POST /biometric/face-verify
+Request
 
-```
-step 1 → "center"  : face must be centered in oval
-step 2 → "left"    : yawAngle > +15° (user turns left)
-step 3 → "right"   : yawAngle < -15° (user turns right)
-step 4 → "done"    : back to center  → trigger autoCapture()
-```
+Content-Type: multipart/form-data
+Authorization: Bearer <JWT_TOKEN>
 
-- Track progress with a `useRef<LivenessStep>` (NOT useState alone — avoids stale closure in callback)
-- Show animated progress dots: ●●● advancing as steps complete
-- A photo of a photo cannot pass this — it cannot physically rotate
+FormData {
+faceImage: File (image/jpeg, max 5MB)
+}
+Backend Logic 🔥
+First Time (Enrollment):
 
----
+1. Authenticate user from JWT token
+2. Validate file size (max 5MB)
+3. Convert image to buffer
+4. Check User.referenceFaceEmbedding:
+   - If NULL → First time enrollment
+5. Extract Face Embedding:
+   - Process image with face recognition
+   - Generate 128-dimensional face descriptor
+   - Handle "No face detected" error
+6. Store Reference Face:
+   - Save embedding as Bytes in User table
+   - Save image path to User.referenceFacePath
+   - Set User.faceEnrolledAt = now()
+   - Set User.faceVerified = true
+7. Return enrollment response
+   Returning User (Verification):
 
-## Face centering rules (`isFaceCentered`)
+8. Load user's reference face embedding
+9. Extract embedding from submitted image
+10. Compare Face Embeddings:
+    - Calculate cosine similarity
+    - Convert to 0-1 confidence score
+11. Apply Threshold:
+    - If confidence >= 0.8 (80%) → PASSED
+    - If confidence < 0.8 → FAILED
+12. Store Verification Attempt:
+    - Update BiometricVerification record
+    - Save confidence score
+    - Update User.faceVerified flag
+    - Set User.lastFaceVerifiedAt = now()
+13. Log verification attempt
+14. Return verification result
+    Response
+    Enrollment (First Time):
 
-```ts
-const OVAL_W = SW * 0.62;
-const OVAL_H = OVAL_W * 1.28;
-const OVAL_CX = SW / 2;
-const OVAL_CY = SH * 0.38;
+{
+"success": true,
+"message": "Face enrolled successfully",
+"data": {
+"confidence": 1.0,
+"passed": true,
+"status": "enrolled"
+}
+}
+Verification (Returning):
 
-// Face center must be within ±60px horizontal, ±80px vertical of oval center
-// Face width must be between 45% and 110% of OVAL_W
-```
+{
+"success": true,
+"message": "Face verified successfully",
+"data": {
+"confidence": 0.92,
+"passed": true,
+"id": "uuid-of-verification-record",
+"status": "verified"
+}
+}
+Failed Verification:
 
-Use `face.bounds` from `FaceDetector.FaceFeature`. If multiple faces detected, use the largest.
+{
+"success": false,
+"message": "Face verification failed with 72% confidence (threshold: 80%)",
+"errors": []
+}
+4️⃣ Get Biometric Status
+Endpoint
 
----
+GET /biometric/status
+Request
 
-## Oval mask (SVG fillRule="evenodd")
+Authorization: Bearer <JWT_TOKEN>
+Backend Logic
 
-Render a dark overlay with a transparent oval cutout using `react-native-svg`:
+1. Authenticate user from JWT token
+2. Query User table for verification flags:
+   - user.idVerified
+   - user.addressVerified
+   - user.faceVerified
+3. Calculate Overall Status:
+   - All 3 true → "VERIFIED"
+   - Any 1-2 true → "IN_PROGRESS"
+   - All false → "PENDING"
+4. Build Step Lists:
+   - completedSteps: ["id_verification", "address_verification", "face_verification"]
+   - pendingSteps: Remaining steps
+5. Return status response
+   Response
 
-```tsx
-<Svg width={SW} height={SH} style={absoluteFill} pointerEvents="none">
-  <Path
-    d={`M 0 0 L ${SW} 0 L ${SW} ${SH} L 0 ${SH} Z
-        M ${OVAL_CX} ${OVAL_CY}
-        m ${-OVAL_W / 2} 0
-        a ${OVAL_W / 2} ${OVAL_H / 2} 0 1 0 ${OVAL_W} 0
-        a ${OVAL_W / 2} ${OVAL_H / 2} 0 1 0 ${-OVAL_W} 0`}
-    fill="rgba(0,0,0,0.55)"
-    fillRule="evenodd"
-  />
-  <Ellipse
-    cx={OVAL_CX}
-    cy={OVAL_CY}
-    rx={OVAL_W / 2}
-    ry={OVAL_H / 2}
-    fill="none"
-    stroke={borderColor}
-    strokeWidth={2.5}
-    strokeDasharray={isDashed ? '8 6' : undefined}
-  />
-</Svg>
-```
+{
+"success": true,
+"data": {
+"idVerified": true,
+"addressVerified": true,
+"faceVerified": false,
+"overallStatus": "IN_PROGRESS",
+"completedSteps": ["id_verification", "address_verification"],
+"pendingSteps": ["face_verification"]
+}
+}
+📊 Database Schema Updates
+User Table (users_db)
 
-Oval border color rules:
+-- New columns added:
+idVerified BOOLEAN DEFAULT FALSE
+addressVerified BOOLEAN DEFAULT FALSE
+faceVerified BOOLEAN DEFAULT FALSE
+idVerificationId UUID UNIQUE
+addressVerificationId UUID UNIQUE
+faceVerificationId UUID UNIQUE
+referenceFaceEmbedding BYTEA -- 128-dimensional face embedding
+referenceFacePath VARCHAR(255)
+faceEnrolledAt TIMESTAMP
+lastFaceVerifiedAt TIMESTAMP
+BiometricVerification Table (biometric_db)
 
-- `waiting` → `rgba(255,255,255,0.4)` + dashed
-- `detected` → `rgba(255,255,255,0.9)` + dashed
-- `centered` / `success` → `#00C897` + solid
-- `no_face` → `#EF5350` + solid
+-- New columns added:
+rawOcrText TEXT -- Raw OCR output
+extractedData JSONB -- Parsed document data
+documentType VARCHAR -- UTILITY_BILL, BANK_STATEMENT, etc.
+confidenceScore FLOAT -- Face verification confidence (0-1)
+🔧 Backend Service Flow
+Face Recognition Service (face-recognition.service.ts)
 
----
+// 1. Extract Face Embedding (128 dimensions)
+async extractFaceEmbedding(imageBuffer: Buffer): Promise<Float32Array>
 
-## Pan responder / ref rules
+// 2. Compare Two Embeddings (Cosine Similarity)
+compareFaces(embedding1, embedding2): number (0-1)
 
-- `cameraRef = useRef<CameraView>(null)` — attach to `<CameraView ref={cameraRef} />`
-- `livenessRef = useRef<LivenessStep>('center')` — single source of truth for liveness state
-- `statusRef = useRef<Status>('waiting')` — prevents stale closure in `onFacesDetected`
-- `lastCaptureTime = useRef(0)` — debounce, reject calls within 3000ms of last capture
-- PanResponders (if needed) must be created with `useRef(PanResponder.create(...))` — NEVER inside useMemo with state deps
+// 3. Verify Face with Threshold
+async verifyFace(referenceEmbedding, submittedImage): {
+passed: boolean,
+confidence: number,
+similarity: number
+}
 
----
+// 4. Convert Embedding to/from Database
+embeddingToBuffer(embedding): Buffer
+bufferToEmbedding(buffer): Float32Array
+OCR Service (ocr.service.ts)
 
-## autoCapture() implementation
+// 1. Extract Text with Preprocessing
+async extractText(imageBuffer): Promise<{
+text: string,
+confidence: number
+}>
 
-```ts
-const autoCapture = useCallback(async () => {
-  if (Date.now() - lastCaptureTime.current < 3000) return;
-  lastCaptureTime.current = Date.now();
-  if (!cameraRef.current || capturing) return;
+// 2. Parse NID Data
+parseNIDData(ocrText, side: 'FRONT' | 'BACK'): {
+name, nameBangla, idNumber, dob, address,
+fatherName, motherName, bloodGroup, ...
+}
 
-  setCapturing(true);
-  setStatus('capturing');
-  statusRef.current = 'capturing';
+// 3. Parse Passport Data
+parsePassportData(ocrText): {
+name, passportNumber, dob, expiryDate,
+nationality, placeOfBirth, sex, ...
+}
 
-  const photo = await cameraRef.current.takePictureAsync({ quality: 0.92, base64: false });
-  if (!photo?.uri) throw new Error('No URI');
+// 4. Validate Extracted Data
+validateParsedData(data, requiredFields): {
+valid: boolean,
+missing: string[]
+}
+🚀 How to Integrate with Your App
+Step 1: Update API Base URL
 
-  // Crop to face oval area
-  const cropW = Math.round(OVAL_W * 1.1);
-  const cropX = Math.round(OVAL_CX - cropW / 2);
-  const cropY = Math.round(OVAL_CY - OVAL_H * 0.6);
+const API_BASE_URL = 'http://your-server:4000';
+Step 2: Call Endpoints
+ID Verification
 
-  const cropped = await manipulateAsync(
-    photo.uri,
-    [
-      {
-        crop: {
-          originX: Math.max(0, cropX),
-          originY: Math.max(0, cropY),
-          width: cropW,
-          height: Math.round(OVAL_H * 1.2),
-        },
-      },
-    ],
-    { compress: 0.9, format: SaveFormat.JPEG }
-  );
+const formData = new FormData();
+formData.append('idType', 'NID');
+formData.append('idCardImage', {
+uri: imageUri,
+type: 'image/jpeg',
+name: 'id-nid.jpg',
+});
 
-  dispatch(setFaceImage(cropped.uri));
-  setCapturedUri(cropped.uri);
-  setStatus('success');
-  statusRef.current = 'success';
-}, [capturing, dispatch]);
-```
-
----
-
-## UI layout (all Tailwind/NativeWind — NO StyleSheet except `absoluteFillObject`)
-
-```
-┌─────────────────────────────┐
-│  ← back     [Facial Recog]  │  ← top bar, bg-black/40 pill
-├─────────────────────────────┤
-│                             │
-│   "Look straight ahead"     │  ← instruction above oval
-│                             │
-│      ╭───────────╮          │
-│      │           │          │  ← oval cutout (SVG mask)
-│      │  (camera) │          │
-│      │           │          │
-│      ╰───────────╯          │
-│                             │
-│   ● ● ●  [status pill]      │  ← progress dots + status
-│                             │
-├─────────────────────────────┤
-│      ○  shutter button      │  ← enabled only when centered
-│  Tips: well-lit, no hat...  │
-└─────────────────────────────┘
-```
-
-**Shutter button** — disabled (white/30) when `waiting` or `detected`. Enabled (green) when `centered` or liveness `done`. Shows `ActivityIndicator` while `capturing`.
-
-**Pulsing ring** — `Animated.Value` opacity loop (0→1→0, 1000ms) on an absolute `View` slightly larger than the oval. Only visible when `status === 'centered'`.
-
----
-
-## Success screen (separate JSX branch)
-
-Show when `status === 'success' && capturedUri`:
-
-- Blurred background from `capturedUri` (`blurRadius={8}`)
-- Circular face preview (`180×180`, `rounded-full`, `border-4 border-[#00C897]`)
-- Green checkmark badge below
-- "Face Verified" heading
-- `Continue` button → `router.push('/kyc/verified')`
-- `Retake` button → reset all state back to `waiting`
-
----
-
-## Permission screen
-
-If `!permission.granted`:
-
-- Show a centred card with camera icon, explanation text
-- `Grant Permission` button → `requestPermission()`
-
----
-
-## Redux — add to kycSlice if missing
-
-```ts
-// In kycSlice state:
-faceImageUri: null as string | null,
-
-// In reducers:
-setFaceImage: (state, action: PayloadAction<string>) => {
-  state.faceImageUri = action.payload;
+const response = await fetch(`${API_BASE_URL}/biometric/id-verify`, {
+method: 'POST',
+headers: {
+'Authorization': `Bearer ${token}`,
+'Accept': 'application/json',
 },
-```
+body: formData,
+});
 
-Export `setFaceImage` from the slice.
+const result = await response.json();
+// result.data.ocrData contains extracted info
+Face Verification
 
----
+const formData = new FormData();
+formData.append('faceImage', {
+uri: faceImageUri,
+type: 'image/jpeg',
+name: 'face.jpg',
+});
 
-## Critical rules
+const response = await fetch(`${API_BASE_URL}/biometric/face-verify`, {
+method: 'POST',
+headers: {
+'Authorization': `Bearer ${token}`,
+},
+body: formData,
+});
 
-- **DO NOT** use `StyleSheet.create` for anything except `absoluteFillObject`
-- **DO NOT** recreate pan responders inside `useMemo` with state deps
-- **DO NOT** read `crop` / `status` / `livenessStep` state directly inside `useCallback` — always read from `useRef` mirrors
-- **ALWAYS** guard `cameraRef.current` before calling `takePictureAsync`
-- **ALWAYS** call `setCapturing(false)` in a `finally` block
-- `onFacesDetected` fires every 150ms — keep it synchronous and fast, no awaits inside
-- Image must be `contentFit="cover"` with explicit `style={{ width, height }}` — never `className="absolute inset-0"` on `expo-image`
+const result = await response.json();
+// result.data.status: "enrolled" | "verified" | "failed"
+// result.data.confidence: 0.0 - 1.0
+// result.data.passed: true | false
+Get Status
 
----
+const response = await fetch(`${API_BASE_URL}/biometric/status`, {
+method: 'GET',
+headers: {
+'Authorization': `Bearer ${token}`,
+},
+});
 
-## File to create
+const result = await response.json();
+// result.data.idVerified: boolean
+// result.data.addressVerified: boolean
+// result.data.faceVerified: boolean
+// result.data.overallStatus: "PENDING" | "IN_PROGRESS" | "VERIFIED"
+⚡ Key Features
 
-`app/kyc/facial-recognition.tsx`
-
-Write the complete file. No partial snippets. No placeholder comments like `// implement this`.
-Every branch must be fully implemented.
+1. Face Verification Flow
+   ✅ Enrollment: First time → Store reference face
+   ✅ Verification: Returning → Match with 80% threshold
+   ✅ Confidence: 0-1 scale with percentage display
+   ✅ Error Handling: "No face detected" messages
+2. OCR Processing
+   ✅ Languages: Bangla + English (Tesseract.js)
+   ✅ Preprocessing: Grayscale + contrast enhancement
+   ✅ Confidence: OCR accuracy score
+   ✅ Extraction: Name, ID, DOB, address, etc.
+3. Status Tracking
+   ✅ Real-time: Get current verification status
+   ✅ Progress: Completed vs pending steps
+   ✅ Overall: PENDING → IN_PROGRESS → VERIFIED
+   📝 Response Format Summary
+   Endpoint Success Response Key Fields
+   ID Verify {success, message, data: {id, status, ocrData}} ocrData.name, ocrData.idNumber, ocrData.dob
+   Address Verify {success, message, data: {id, status}} status, documentType
+   Face Verify {success, message, data: {confidence, passed, status}} confidence (0-1), passed, status
+   Get Status {success, data: {idVerified, addressVerified, faceVerified, overallStatus}} All flags + overallStatus
+   ✅

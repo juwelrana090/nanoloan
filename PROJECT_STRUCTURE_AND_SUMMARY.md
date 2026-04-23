@@ -1,0 +1,438 @@
+# NanoLoan - Project Structure & Summary
+
+## 📋 Project Overview
+
+**Project Name:** NanoLoan
+**Package Name:** com.nano.loan.app
+**Company:** Miguns Technology Ltd
+**Location:** Dhaka, Bangladesh
+
+### Description
+NanoLoan is a mobile fintech application built with React Native and Expo that provides micro-lending services. The app features a comprehensive KYC (Know Your Customer) verification system including facial recognition, OCR-based document scanning, and real-time verification. Users can apply for loans, track transactions, view analysis, and manage their profiles through a tab-based navigation interface.
+
+---
+
+## 🏗️ Tech Stack
+
+### Core Framework
+- **React Native:** 0.81.5
+- **Expo SDK:** 54.0.0
+- **React:** 19.1.0
+- **TypeScript:** 5.9.2
+- **Node.js:** (Check package.json for version)
+
+### Navigation & Routing
+- **Expo Router:** 6.0.23 (File-based routing)
+- **React Navigation:** 7.x (Bottom tabs, native navigation)
+- **Tab Navigation:** Analysis, Category, Home, Transactions, Profile
+
+### UI & Styling
+- **NativeWind v4:** (Tailwind CSS for React Native)
+- **Tailwind CSS:** 3.4.0
+- **Expo Vector Icons:** 15.0.2
+- **React Native Vector Icons:** 10.3.0 (FontAwesome, Evil Icons, FontAwesome6)
+- **Google Fonts:** Inter, Roboto, Lilita One
+
+### State Management
+- **Redux Toolkit:** 2.11.2
+- **React Redux:** 9.2.0
+- **Redux Persist:** 6.0.0
+- **Async Storage:** 2.2.0
+
+### Backend & Services
+- **Firebase:** 12.10.0
+  - **Firestore:** Cloud database
+  - **Firebase Messaging:** Push notifications
+  - **Firebase Analytics:** User analytics
+- **API Base URL:** https://backend-nanoloan.giize.com
+
+### Native Features
+- **Camera:** expo-camera (17.0.10) - Photo capture, document scanning
+- **Face Detection:** expo-face-detector (13.0.2) - Facial recognition
+- **OCR/ML Kit:** @react-native-ml-kit/text-recognition (2.0.0) - Document text extraction
+- **Image Processing:** expo-image-manipulator, expo-image-picker
+- **Notifications:** expo-notifications (0.32.16)
+- **Permissions:** react-native-permissions (5.5.1)
+- **Device Info:** react-native-device-info (15.0.2)
+- **Date/Time Picker:** @react-native-community/datetimepicker (8.4.4)
+- **Audio:** expo-audio, expo-av (ringtone, sound effects)
+
+### Build & Development Tools
+- **Gradle:** 8.14.3
+- **Android SDK:** 36 (compileSdk, targetSdk)
+- **Min SDK:** 24 (Android 7.0+)
+- **ProGuard:** Enabled for release builds
+- **Build Tools:** 36.0.0
+
+---
+
+## 📁 Project Structure
+
+```
+nanoloan/
+├── app/                          # Expo Router pages (file-based routing)
+│   ├── (tabs)/                   # Tab navigation screens
+│   │   ├── analysis.tsx          # Loan analysis & statistics
+│   │   ├── category.tsx          # Loan categories
+│   │   ├── index.tsx             # Home screen
+│   │   ├── profile.tsx           # User profile
+│   │   ├── transactions.tsx      # Transaction history
+│   │   └── _layout.tsx           # Tab layout configuration
+│   ├── auth/                     # Authentication screens
+│   │   ├── addresses-update.tsx  # Update user address
+│   │   ├── basic-information.tsx # User basic info (BIO)
+│   │   ├── email-otp-verification.tsx # Email verification
+│   │   ├── login.tsx             # Login screen
+│   │   ├── register.tsx          # Registration screen
+│   │   └── _layout.tsx           # Auth layout
+│   ├── kyc/                      # KYC (Know Your Customer) verification
+│   │   ├── address-capture.tsx   # Capture address proof
+│   │   ├── address-capture-crop.tsx # Crop address document
+│   │   ├── address-capture-preview.tsx # Preview address document
+│   │   ├── address-roles.tsx     # Address roles selection
+│   │   ├── facial-recognition.tsx # Face recognition/verification
+│   │   ├── nid-capture.tsx       # NID (National ID) capture
+│   │   ├── nid-crop.tsx          # Crop NID document
+│   │   └── ...                   # Other KYC screens
+│   ├── +html.tsx                 # HTML entry point
+│   ├── +not-found.tsx            # 404 page
+│   ├── _layout.tsx               # Root layout
+│   └── ...                       # Other configuration files
+│
+├── assets/                       # Static assets
+│   ├── icons/                    # App icons
+│   ├── images/                   # Images
+│   │   ├── ekyc/                 # eKYC related images
+│   │   ├── icons/                # UI icons
+│   │   ├── logo.png              # App logo
+│   │   ├── splash-icon.png       # Splash screen icon
+│   │   └── notification-icon.png # Notification icon
+│   └── sounds/                   # Sound files
+│       └── ringtone.mp3          # Notification ringtone
+│
+├── android/                      # Android native code (generated by expo prebuild)
+│   ├── app/
+│   │   ├── build/                # Build outputs
+│   │   ├── src/                  # Android source code
+│   │   └── google-services.json  # Firebase configuration
+│   ├── build/                    # Gradle build cache
+│   ├── gradle/                   # Gradle wrapper
+│   └── ...                       # Android configuration files
+│
+├── context/                      # React Context providers
+│
+├── modules/                      # Feature modules (Redux + hooks)
+│   ├── forgot-password/          # Forgot password feature
+│   │   ├── actions/              # Redux actions
+│   │   ├── hooks/                # Custom React hooks
+│   │   └── types/                # TypeScript types
+│   ├── home/                     # Home feature
+│   │   ├── actions/
+│   │   ├── hooks/
+│   │   ├── services/             # API services
+│   │   └── types/
+│   ├── login/                    # Login feature
+│   │   ├── actions/
+│   │   ├── hooks/
+│   │   └── types/
+│   ├── register/                 # Registration feature
+│   │   ├── actions/
+│   │   ├── hooks/
+│   │   └── types/
+│   └── verify-email/             # Email verification feature
+│       ├── actions/
+│       ├── hooks/
+│       └── types/
+│
+├── plugins/                      # Expo config plugins
+│   ├── android-hide-title.js     # Hide Android title bar
+│   ├── android-manifest-fix.js   # Fix Android manifest issues
+│   ├── android-release-signing.js # Configure release signing
+│   ├── android-play-console-fixes.js # Play Store fixes
+│   ├── android-proguard-rules.js # ProGuard rules
+│   └── android-disable-lint.js   # Disable lint warnings
+│
+├── shared/                       # Shared resources
+│   ├── components/               # Reusable components
+│   │   ├── kyc/                  # KYC components
+│   │   ├── UI/                   # UI components
+│   │   └── welcome/              # Welcome/onboarding components
+│   ├── config/                   # Configuration files
+│   ├── constants/                # Constants (API endpoints, etc.)
+│   ├── contexts/                 # React contexts
+│   ├── hooks/                    # Shared React hooks
+│   ├── libs/                     # Libraries & utilities
+│   │   ├── action/               # Redux action helpers
+│   │   ├── redux/                # Redux setup
+│   │   └── types/                # Shared types
+│   └── utils/                    # Utility functions
+│
+├── types/                        # Global TypeScript types
+│
+├── utils/                        # Utility functions
+│   └── ocr/                      # OCR utilities
+│
+├── scripts/                      # Build & deployment scripts
+│   └── ...
+│
+├── .claude/                      # Claude Code configuration
+│   └── memory/                   # Project memory for AI
+│
+├── Configuration Files:
+│   ├── app.json                  # Expo app configuration
+│   ├── package.json              # NPM dependencies
+│   ├── tsconfig.json             # TypeScript configuration
+│   ├── tailwind.config.js        # Tailwind CSS configuration
+│   ├── metro.config.js           # Metro bundler configuration
+│   ├── babel.config.js           # Babel configuration
+│   ├── eslint.config.js          # ESLint configuration
+│   └── prettier.config.js        # Prettier configuration
+│
+├── Documentation Files:
+│   ├── README.md                 # Project readme
+│   ├── ANDROID_SIGNING_SETUP.md  # Android signing setup guide
+│   ├── EXPO_PREBUILD_SETUP.md    # Expo prebuild setup
+│   ├── TROUBLESHOOTING.md        # Troubleshooting guide
+│   ├── TASK_COMPLETION_SUMMARY.md # Task completion log
+│   ├── BUILD_FIX_SUMMARY.md      # Build error fixes
+│   ├── prompt.md                 # AI prompt template
+│   ├── build-release.ps1         # PowerShell build script
+│   └── PROJECT_STRUCTURE_AND_SUMMARY.md # This file
+│
+├── Signing Files (Not in git):
+│   ├── android-release.keystore  # Android release keystore
+│   └── android-signing.properties # Signing properties
+│
+└── Other:
+    ├── .gitignore                # Git ignore rules
+    ├── .env                      # Environment variables
+    └── node_modules/             # NPM dependencies
+```
+
+---
+
+## 🚀 Build & Deployment
+
+### Development Commands
+```bash
+# Start development server
+npm start
+
+# Run on Android device
+npm run android:device
+
+# Run on Android emulator
+npm run android
+
+# Clean full project
+npm run clean:full
+
+# Reset and fresh start
+npm run fresh:android
+```
+
+### Release Build Commands
+```powershell
+# Run interactive build script
+.\build-release.ps1
+
+# Manual build commands
+cd android
+.\gradlew assembleRelease        # Build APK
+.\gradlew bundleRelease          # Build AAB
+```
+
+### Build Outputs
+- **APK:** `android/app/build/outputs/apk/release/app-release.apk`
+- **AAB:** `android/app/build/outputs/bundle/release/app-release.aab`
+
+---
+
+## 🔑 Key Features
+
+### 1. **Authentication System**
+- Login with email/phone
+- Registration with basic info
+- Email OTP verification
+- Forgot password flow
+- Redux-based state management
+
+### 2. **KYC (Know Your Customer) Verification**
+- **Facial Recognition:** Face detection and matching
+- **NID Verification:** National ID capture with OCR
+- **Address Verification:** Address proof capture and OCR
+- **Document Scanning:** Camera-based document capture
+- **Image Processing:** Crop, preview, and enhance documents
+- **ML Kit Integration:** Text extraction from documents
+
+### 3. **Loan Management**
+- Apply for loans
+- View loan categories
+- Track application status
+- View loan analysis & statistics
+- Transaction history
+
+### 4. **User Profile**
+- Basic information management
+- Address updates
+- Profile settings
+- Account preferences
+
+### 5. **Push Notifications**
+- Firebase Cloud Messaging
+- Custom notification sounds
+- In-app notifications
+
+### 6. **Security**
+- Keystore-based app signing
+- ProGuard obfuscation
+- Firebase authentication
+- Secure API communication
+
+---
+
+## 📱 App Screens
+
+### Tab Screens
+1. **Home (index.tsx)** - Dashboard with quick actions
+2. **Analysis (analysis.tsx)** - Loan statistics & analytics
+3. **Category (category.tsx)** - Loan categories
+4. **Transactions (transactions.tsx)** - Transaction history
+5. **Profile (profile.tsx)** - User profile & settings
+
+### Auth Screens
+- Login
+- Register
+- Email OTP Verification
+- Basic Information (BIO)
+- Address Update
+
+### KYC Screens
+- Facial Recognition
+- NID Capture & Crop
+- Address Capture, Crop, Preview
+- Address Roles Selection
+
+---
+
+## 🔧 Configuration
+
+### Android Configuration
+- **Package:** com.nano.loan.app
+- **Version Code:** 3
+- **Min SDK:** 24 (Android 7.0)
+- **Target SDK:** 36 (Android 14)
+- **Compile SDK:** 36
+
+### Permissions
+- CAMERA (for KYC document capture)
+- INTERNET (API calls)
+- ACCESS_NETWORK_STATE
+- WAKE_LOCK (keep screen on during KYC)
+- FOREGROUND_SERVICE (notifications)
+- And more...
+
+### Firebase Services
+- Firestore (database)
+- Firebase Messaging (push notifications)
+- Firebase Analytics (user analytics)
+
+### Build Configuration
+- ProGuard: Enabled
+- Resource Shrinking: Disabled
+- Gradle Daemon: Disabled in release builds
+- JVM Memory: 4GB (-Xmx4096m)
+
+---
+
+## 🐛 Known Issues & Fixes
+
+### Build Issues
+1. **`:app:packageRelease FAILED`**
+   - **Fix:** Removed `gradlew clean` before `assembleRelease`
+   - **Fix:** Added `--no-daemon` flag
+   - **Fix:** Increased JVM memory to 4GB
+   - **Fix:** Stop Gradle daemons before building
+
+### See Also
+- [BUILD_FIX_SUMMARY.md](BUILD_FIX_SUMMARY.md) - Detailed build fixes
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Common issues & solutions
+- [ANDROID_SIGNING_SETUP.md](ANDROID_SIGNING_SETUP.md) - Signing setup guide
+
+---
+
+## 📝 Development Notes
+
+### State Management
+- Redux Toolkit for global state
+- Redux Persist for state persistence
+- Async Storage for offline data
+- Context API for local component state
+
+### Styling
+- NativeWind (Tailwind CSS) for styling
+- Responsive design with utility classes
+- Custom theme colors
+- Font family: Inter (primary), Roboto, Lilita One
+
+### Navigation
+- Expo Router (file-based routing)
+- Tab navigation for main screens
+- Stack navigation for auth/kyc flows
+- Deep linking support
+
+### API Integration
+- Base URL: https://backend-nanoloan.giize.com
+- RESTful API endpoints
+- Firebase for real-time data
+- Redux async thunks for API calls
+
+---
+
+## 🔒 Security Considerations
+
+- Keystore file NOT in git (added to .gitignore)
+- Signing properties NOT in git
+- Environment variables for sensitive data
+- ProGuard obfuscation enabled
+- SSL/TLS for API communication
+- Firebase security rules for Firestore
+
+---
+
+## 📦 Dependencies Summary
+
+### Production Dependencies: ~50 packages
+### Development Dependencies: ~8 packages
+### Total Size: ~623 MB (node_modules)
+
+---
+
+## 🎯 Roadmap
+
+- [ ] iOS version
+- [ ] Web version (static export)
+- [ ] Additional KYC features
+- [ ] Biometric authentication
+- [ ] Offline mode support
+- [ ] Performance optimization
+
+---
+
+## 👥 Team
+
+**Company:** Miguns Technology Ltd
+**Location:** Dhaka, Bangladesh
+**Project:** NanoLoan - Micro-lending Platform
+
+---
+
+## 📞 Support
+
+For issues, questions, or contributions, please contact the development team.
+
+---
+
+**Last Updated:** April 23, 2026
+**Version:** 1.0.0 (Version Code: 3)
+**Build Status:** ✅ Passing (with fixes applied)

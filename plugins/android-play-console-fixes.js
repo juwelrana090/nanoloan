@@ -33,7 +33,7 @@ function modifyAndroidManifest(androidManifest) {
     const mainActivity = activities.find(
         (activity) =>
             activity.$["android:name"] === ".MainActivity" ||
-            activity.$["android:name"] === "com.bespeaky.learning.app.MainActivity"
+            activity.$["android:name"] === "com.nano.loan.app.MainActivity"
     );
 
     if (mainActivity) {

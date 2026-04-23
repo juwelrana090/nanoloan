@@ -24,6 +24,13 @@ Write-Host "[OK] Keystore found" -ForegroundColor Green
 Write-Host "[OK] Signing properties found" -ForegroundColor Green
 Write-Host ""
 
+# Stop any existing Gradle daemons to avoid file locking
+Write-Host "[CLEAN] Stopping Gradle daemons..." -ForegroundColor Yellow
+Set-Location android
+.\gradlew --stop 2>$null
+Set-Location ..
+Write-Host ""
+
 # Ask user what to build
 Write-Host "What would you like to build?" -ForegroundColor Yellow
 Write-Host "1. Clean prebuild + Build APK + Build AAB (Recommended for first build)"
@@ -51,14 +58,15 @@ switch ($choice) {
         
         Write-Host "[BUILD] Building Release APK..." -ForegroundColor Yellow
         Set-Location android
-        .\gradlew clean
-        .\gradlew assembleRelease
+        # Skip clean to avoid file locking issues - prebuild already cleaned
+        # Increase memory and disable daemon to prevent packaging failures
+        .\gradlew "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" assembleRelease --no-daemon
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[SUCCESS] APK built successfully!" -ForegroundColor Green
             
             Write-Host "[BUILD] Building Release AAB..." -ForegroundColor Yellow
-            .\gradlew bundleRelease
+            .\gradlew "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" bundleRelease --no-daemon
             
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "[SUCCESS] AAB built successfully!" -ForegroundColor Green
@@ -76,10 +84,10 @@ switch ($choice) {
             Write-Host "[ERROR] android folder not found. Run prebuild first (option 1 or 5)" -ForegroundColor Red
             exit 1
         }
-        
+
         Write-Host "[BUILD] Building Release APK..." -ForegroundColor Yellow
         Set-Location android
-        .\gradlew assembleRelease
+        .\gradlew assembleRelease --no-daemon "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m"
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[SUCCESS] APK built successfully!" -ForegroundColor Green
@@ -112,16 +120,16 @@ switch ($choice) {
             Write-Host "[ERROR] android folder not found. Run prebuild first (option 1 or 5)" -ForegroundColor Red
             exit 1
         }
-        
+
         Write-Host "[BUILD] Building Release APK..." -ForegroundColor Yellow
         Set-Location android
-        .\gradlew assembleRelease
+        .\gradlew assembleRelease --no-daemon "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m"
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "[SUCCESS] APK built successfully!" -ForegroundColor Green
             
             Write-Host "[BUILD] Building Release AAB..." -ForegroundColor Yellow
-            .\gradlew bundleRelease
+            .\gradlew "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m" bundleRelease --no-daemon
             
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "[SUCCESS] AAB built successfully!" -ForegroundColor Green
