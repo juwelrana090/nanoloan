@@ -7,7 +7,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useVerifyEmail } from '@/modules/verify-email/hooks/useVerifyEmail';
@@ -21,12 +21,12 @@ const EmailOTPVerificationScreen = () => {
     email ?? ''
   );
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
-  const inputRefs = useRef<(TextInput | null)[]>([]);
+  const inputRefs = useRef<(TextInput | null)[]>(Array(OTP_LENGTH).fill(null));
 
   const isFilled = otp.every((d) => d !== '');
   const isDisabled = isVerifying || isResending;
 
-  const handleChange = (text: string, index: number) => {
+  const handleChange = useCallback((text: string, index: number) => {
     const digit = text.replace(/[^0-9]/g, '').slice(-1);
     const newOtp = [...otp];
     newOtp[index] = digit;
@@ -34,27 +34,27 @@ const EmailOTPVerificationScreen = () => {
     if (digit && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
-  };
+  }, [otp]);
 
-  const handleKeyPress = (e: any, index: number) => {
+  const handleKeyPress = useCallback((e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
-  };
+  }, [otp]);
 
-  const handleVerify = () => {
+  const handleVerify = useCallback(() => {
     if (isFilled && !isDisabled) {
-      verify(email,otp.join(''));
+      verify(email ?? '', otp.join(''));
     }
-  };
+  }, [isFilled, isDisabled, verify, email, otp]);
 
-  const handleResend = () => {
+  const handleResend = useCallback(() => {
     if (!isDisabled) {
       setOtp(Array(OTP_LENGTH).fill(''));
       inputRefs.current[0]?.focus();
       resend();
     }
-  };
+  }, [isDisabled, resend]);
 
   return (
     <KeyboardAvoidingView
@@ -72,7 +72,7 @@ const EmailOTPVerificationScreen = () => {
             {/* Description */}
             <Text className="mb-6 text-[15px] leading-6 text-[#1A1A1A]">
               Enter the verification code we sent to{'\n'}
-              <Text className="font-semibold text-[#1A1A1A]">{email ?? 'your email'}</Text>
+              <Text className="font-semibold text-[#1A1A1A]">{email || 'your email address'}</Text>
             </Text>
 
             {/* Error / success messages */}

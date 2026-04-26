@@ -96,6 +96,7 @@ export default function IDCapturePreviewScreen() {
   const selectedIdType = useSelector((state: RootState) => state.kyc.selectedIdType) || 'NID';
 
   const [debugText, setDebugText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const showDebug = __DEV__;
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function IDCapturePreviewScreen() {
       extractTextFromImage(uri as string, 'back');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uri, side]);
+  }, [uri]);
 
   // ── OCR ──────────────────────────────────────────────────────────────────
 
@@ -224,7 +225,13 @@ export default function IDCapturePreviewScreen() {
       return;
     }
 
+    // Prevent multiple simultaneous submissions
+    if (isSubmitting || isVerifying) {
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
       dispatch(setLoading(true));
 
       // For now, we'll submit the front image (you may need to submit both front and back separately)
@@ -243,10 +250,12 @@ export default function IDCapturePreviewScreen() {
         message: response.message || 'ID card verified successfully',
       });
 
+      setIsSubmitting(false);
       dispatch(setLoading(false));
       router.push('/kyc/address-roles');
     } catch (error: any) {
       console.error('ID verification error:', error);
+      setIsSubmitting(false);
       dispatch(setLoading(false));
 
       const errorMsg = error?.data?.message || 'Failed to verify ID card';
@@ -507,11 +516,11 @@ export default function IDCapturePreviewScreen() {
               onPress={handleConfirmAndContinue}
               activeOpacity={0.8}
               className={`mt-8 h-[54px] items-center justify-center rounded-full ${
-                isLoading || isVerifying || !canProceed() ? 'bg-[#CCC]' : 'bg-[#00C897]'
+                isLoading || isVerifying || isSubmitting || !canProceed() ? 'bg-[#CCC]' : 'bg-[#00C897]'
               }`}
-              disabled={isLoading || isVerifying || !canProceed()}>
+              disabled={isLoading || isVerifying || isSubmitting || !canProceed()}>
               <Text className="text-[17px] font-bold text-white">
-                {isLoading || isVerifying
+                {isLoading || isVerifying || isSubmitting
                   ? 'Processing…'
                   : !canProceed()
                     ? 'Fix Issues First'

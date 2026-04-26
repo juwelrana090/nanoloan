@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -36,7 +36,7 @@ export const useVerifyEmail = (email: string) => {
   const [error, setError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
 
-  const verify = async (email: string, otp: string) => {
+  const verify = useCallback(async (email: string, otp: string) => {
     setError(null);
     try {
       const response = await verifyMutation({ email, otp }).unwrap();
@@ -47,9 +47,9 @@ export const useVerifyEmail = (email: string) => {
       const msg = err?.data?.message ?? 'Verification failed. Please try again.';
       setError(Array.isArray(msg) ? msg[0] : msg);
     }
-  };
+  }, [verifyMutation, dispatch, router]);
 
-  const resend = async () => {
+  const resend = useCallback(async () => {
     setError(null);
     setResendSuccess(false);
     try {
@@ -59,7 +59,7 @@ export const useVerifyEmail = (email: string) => {
       const msg = err?.data?.message ?? 'Failed to resend OTP. Please try again.';
       setError(Array.isArray(msg) ? msg[0] : msg);
     }
-  };
+  }, [resendMutation, email]);
 
   return { verify, resend, isVerifying, isResending, error, resendSuccess };
 };
