@@ -221,7 +221,8 @@ export default function BasicInformationScreen() {
     };
 
     fetchUserData();
-  }, [getMe, isAuthenticated, token, dispatch, showError]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, token, dispatch, showError]);
 
   // Clear error when user starts typing
   const clearError = (field: string) => {

@@ -38,42 +38,16 @@ const baseQuery = fetchBaseQuery({
 });
 
 const baseQueryWithAutoLogout = async (args: any, api: any, extraOptions: any) => {
-    // Handle FormData conversion if formData flag is set
-    let processedArgs = args;
-    if (args && typeof args === 'object' && args.formData && args.body) {
-        // Convert body object to FormData
-        const formData = new FormData();
-        Object.keys(args.body).forEach(key => {
-            const value = args.body[key];
-            if (value && typeof value === 'object' && value.uri) {
-                // File object - append as file
-                formData.append(key, {
-                    uri: value.uri,
-                    name: value.name || 'file.jpg',
-                    type: value.type || 'image/jpeg',
-                } as any);
-            } else {
-                // Regular value - append as is
-                formData.append(key, value);
-            }
-        });
-
-        // Update args with FormData and remove formData flag
-        processedArgs = {
-            ...args,
-            body: formData,
-            formData: undefined,
-        };
-    }
-
     console.log('🚀 Making API Request:', {
-        url: typeof processedArgs === 'string' ? processedArgs : processedArgs.url,
-        method: typeof processedArgs === 'string' ? 'GET' : processedArgs.method,
-        baseUrl: `${apiUrl}/v1`
+        url: typeof args === 'string' ? args : args.url,
+        method: typeof args === 'string' ? 'GET' : args.method,
+        baseUrl: `${apiUrl}/v1`,
+        hasBody: !!args.body,
+        bodyType: args.body?.constructor?.name,
     });
 
     try {
-        const result = await baseQuery(processedArgs, api, extraOptions);
+        const result = await baseQuery(args, api, extraOptions);
 
         console.log('📥 API Response:', {
             success: !result.error,
@@ -108,7 +82,7 @@ const baseQueryWithAutoLogout = async (args: any, api: any, extraOptions: any) =
             console.error('❌ API Error:', {
                 status: result.error.status,
                 data: result.error.data,
-                message: result.error.data?.message || result.error.status
+                message: (result.error.data as any)?.message || result.error.status
             });
         }
 

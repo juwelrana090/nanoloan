@@ -41,8 +41,18 @@ export const useVerifyEmail = (email: string) => {
     try {
       const response = await verifyMutation({ email, otp }).unwrap();
       console.log('user login response :::', response);
-      await persistLoginSession(dispatch, response);
-      router.replace('/auth/basic-information' as any);
+
+      // Check if response contains accessToken (auto-login flow)
+      if (response.data?.accessToken) {
+        await persistLoginSession(dispatch, response);
+        router.replace('/auth/basic-information' as any);
+      } else {
+        // No tokens returned - redirect to login with email pre-filled
+        router.replace({
+          pathname: '/auth/login',
+          params: { email }
+        } as any);
+      }
     } catch (err: any) {
       const msg = err?.data?.message ?? 'Verification failed. Please try again.';
       setError(Array.isArray(msg) ? msg[0] : msg);

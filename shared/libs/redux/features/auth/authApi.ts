@@ -3,8 +3,6 @@ import type {
   AddAddressRequest,
   ApiSuccessResponse,
   BiometricFaceVerifyData,
-  BiometricFaceVerifyRequest,
-  BiometricStatusResponse,
   ChangePasswordRequest,
   CheckAvailabilityResponse,
   DeleteAccountRequest,
@@ -165,17 +163,8 @@ export const authApi = apiSlice.injectEndpoints({
         method: 'DELETE',
       }),
     }),
-    // ─── Face Verification ────────────────────────────────────────────────────────
-    faceVerify: builder.mutation<ApiSuccessResponse<BiometricFaceVerifyData>, BiometricFaceVerifyRequest>({
-      query: (data) => ({
-        url: '/biometric/face-verify',
-        method: 'POST',
-        body: data,
-        formData: true, // Indicate this is FormData
-      }),
-    }),
     // ─── Biometric Status Check ───────────────────────────────────────────────────
-    getBiometricStatus: builder.query<ApiSuccessResponse<BiometricStatusResponse>, void>({
+    getBiometricStatus: builder.query<ApiSuccessResponse<{ idVerified: boolean; addressVerified: boolean; faceVerified: boolean; overallStatus: string }>, void>({
       query: () => ({
         url: '/biometric/status',
         method: 'GET',
@@ -209,7 +198,6 @@ export const {
   useUpdateAddressMutation,
   useRegisterFingerprintMutation,
   useDeleteFingerprintMutation,
-  useFaceVerifyMutation,
   useGetBiometricStatusQuery,
   useLazyGetBiometricStatusQuery,
 } = authApi;

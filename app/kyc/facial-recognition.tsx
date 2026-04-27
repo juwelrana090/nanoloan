@@ -26,8 +26,8 @@ import { Image } from 'expo-image';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useDispatch } from 'react-redux';
 import { setFaceImage } from '@/shared/libs/redux/features/kyc/kycSlice';
-import { useFaceVerifyMutation } from '@/shared/libs/redux/features/auth/authApi';
 import Svg, { Path, Ellipse } from 'react-native-svg';
+import { useFaceVerifyMutation } from '@/shared/libs/redux/features/biometric/biometricApi';
 
 const { width: SW, height: SH } = Dimensions.get('window');
 
@@ -188,12 +188,15 @@ export default function FacialRecognitionScreen() {
       // Take the picture
       console.log('Calling takePictureAsync...');
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.92,
-        base64: false,
+        quality: 1,
         skipProcessing: false,
       });
 
-      console.log('Photo captured:', photo);
+      console.log('Photo captured:', {
+        uri: photo.uri.substring(0, 60) + '...',
+        width: photo.width,
+        height: photo.height,
+      });
 
       if (!photo?.uri) {
         console.error('No photo URI returned:', photo);
@@ -221,47 +224,81 @@ export default function FacialRecognitionScreen() {
         return;
       }
 
-      console.log('Face detected, cropping image...');
-      // Face detected - crop to oval area
-      const cropSize = Math.round(OVAL_W * 1.1);
-      const cropX = Math.round(OVAL_CX - cropSize / 2);
-      const cropY = Math.round(OVAL_CY - OVAL_H * 0.6);
+      console.log('Face detected, compressing image for upload...');
+      setStatus('validating');
 
-      const cropped = await manipulateAsync(
+      // Compress image to reduce file size and avoid 413 error
+      // Resize to max 800px width/height and compress to 0.8 quality
+      const maxSize = 800;
+      const width = photo.width || 1920;
+      const height = photo.height || 1080;
+
+      let newWidth = width;
+      let newHeight = height;
+
+      if (width > height && width > maxSize) {
+        newWidth = maxSize;
+        newHeight = Math.round((height * maxSize) / width);
+      } else if (height > maxSize) {
+        newHeight = maxSize;
+        newWidth = Math.round((width * maxSize) / height);
+      }
+
+      console.log('📐 Resizing image from', width, 'x', height, 'to', newWidth, 'x', newHeight);
+
+      const compressed = await manipulateAsync(
         photo.uri,
         [
           {
-            crop: {
-              originX: Math.max(0, cropX),
-              originY: Math.max(0, cropY),
-              width: cropSize,
-              height: Math.round(OVAL_H * 1.2),
+            resize: {
+              width: newWidth,
+              height: newHeight,
             },
           },
         ],
-        { compress: 0.9, format: SaveFormat.JPEG }
+        {
+          compress: 0.8,
+          format: SaveFormat.JPEG,
+          base64: false,
+        }
       );
 
-      console.log('Image cropped successfully');
-      setCapturedUri(cropped.uri);
-      dispatch(setFaceImage(cropped.uri));
+      console.log('✅ Image compressed:', {
+        originalUri: photo.uri.substring(0, 50) + '...',
+        compressedUri: compressed.uri.substring(0, 50) + '...',
+        width: compressed.width,
+        height: compressed.height,
+      });
 
-      // Call face verification API
+      // Store compressed image URI for display
+      setCapturedUri(compressed.uri);
+      dispatch(setFaceImage(compressed.uri));
+
+      // Call face verification API with compressed image
       console.log('🔍 Calling face verification API...');
-      setStatus('validating');
 
       try {
-        // Prepare face image data object (matches BiometricFaceVerifyRequest type)
-        const faceImageData = {
-          faceImage: {
-            uri: cropped.uri,
-            name: 'face.jpg',
-            type: 'image/jpeg',
-          },
-        };
+        // Create FormData instance for multipart upload
+        const formData = new FormData();
 
-        // Call the face verification API
-        const response = await verifyFace(faceImageData as any).unwrap();
+        // Use compressed image URI
+        formData.append('faceImage', {
+          uri: compressed.uri,
+          type: 'image/jpeg',
+          name: 'face.jpg',
+        } as any);
+
+        console.log('📤 FormData details:', {
+          field: 'faceImage',
+          uri: compressed.uri.substring(0, 80) + '...',
+          type: 'image/jpeg',
+          name: 'face.jpg',
+          width: compressed.width,
+          height: compressed.height,
+        });
+
+        // Call the face verification API with FormData
+        const response = await verifyFace(formData as any).unwrap();
         console.log('✅ Face verification response:', response);
 
         const { confidence, passed } = response.data;
@@ -288,9 +325,14 @@ export default function FacialRecognitionScreen() {
         }
       } catch (apiError: any) {
         console.error('❌ Face verification API error:', apiError);
+        console.error('Error details:', {
+          status: apiError?.status,
+          data: apiError?.data,
+          message: apiError?.data?.message || apiError?.message,
+        });
         setStatus('no_face');
 
-        const errorMsg = apiError?.data?.message || 'Face verification failed. Please try again.';
+        const errorMsg = apiError?.data?.message || apiError?.message || 'Face verification failed. Please try again.';
         Alert.alert('Verification Error', errorMsg, [
           { text: 'Try Again', onPress: () => setStatus('ready') },
           { text: 'Cancel', onPress: () => router.back(), style: 'cancel' },

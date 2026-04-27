@@ -6,6 +6,7 @@ import type {
   BiometricIdVerifyResponse,
   BiometricAddressVerifyRequest,
   BiometricAddressVerifyResponse,
+  BiometricFaceVerifyData,
   ApiSuccessResponse,
 } from '@/shared/libs/types/auth.types';
 
@@ -25,7 +26,6 @@ export const biometricApi = apiSlice.injectEndpoints({
         url: '/biometric/id-verify',
         method: 'POST',
         body: data,
-        // Don't set Content-Type for FormData - fetch does it automatically with boundary
       }),
     }),
 
@@ -38,7 +38,17 @@ export const biometricApi = apiSlice.injectEndpoints({
         url: '/biometric/address-verify',
         method: 'POST',
         body: data,
-        // Don't set Content-Type for FormData - fetch does it automatically with boundary
+      }),
+    }),
+
+    // POST /v1/biometric/face-verify
+    // multipart/form-data  field: faceImage (binary)
+    // response.data: { confidence: number, passed: boolean }  threshold: 0.8
+    faceVerify: builder.mutation<ApiSuccessResponse<BiometricFaceVerifyData>, FormData>({
+      query: (formData) => ({
+        url: '/biometric/face-verify',
+        method: 'POST',
+        body: formData,
       }),
     }),
   }),
@@ -48,4 +58,5 @@ export const {
   useStartVerificationMutation,
   useVerifyIdMutation,
   useVerifyAddressMutation,
+  useFaceVerifyMutation,
 } = biometricApi;

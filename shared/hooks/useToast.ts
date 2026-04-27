@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import Toast from 'react-native-toast-message';
 
 interface ToastConfig {
@@ -8,7 +9,7 @@ interface ToastConfig {
 }
 
 export const useToast = () => {
-  const showSuccess = ({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
+  const showSuccess = useCallback(({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
     Toast.show({
       type: 'success',
       text1: title,
@@ -18,9 +19,9 @@ export const useToast = () => {
       topOffset: 60,
       bottomOffset: 40,
     });
-  };
+  }, []);
 
-  const showError = ({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
+  const showError = useCallback(({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
     Toast.show({
       type: 'error',
       text1: title,
@@ -30,9 +31,9 @@ export const useToast = () => {
       topOffset: 60,
       bottomOffset: 40,
     });
-  };
+  }, []);
 
-  const showInfo = ({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
+  const showInfo = useCallback(({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
     Toast.show({
       type: 'info',
       text1: title,
@@ -42,9 +43,9 @@ export const useToast = () => {
       topOffset: 60,
       bottomOffset: 40,
     });
-  };
+  }, []);
 
-  const showWarning = ({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
+  const showWarning = useCallback(({ title, message, duration = 2500, position = 'top' }: ToastConfig) => {
     Toast.show({
       type: 'warning',
       text1: title,
@@ -54,18 +55,18 @@ export const useToast = () => {
       topOffset: 60,
       bottomOffset: 40,
     });
-  };
+  }, []);
 
-  const hide = () => {
+  const hide = useCallback(() => {
     Toast.hide();
-  };
+  }, []);
 
-  const hideAll = () => {
+  const hideAll = useCallback(() => {
     Toast.hide();
-  };
+  }, []);
 
   // Additional utility methods for enhanced functionality
-  const showCustom = (config: {
+  const showCustom = useCallback((config: {
     type: 'success' | 'error' | 'info' | 'warning';
     title: string;
     message?: string;
@@ -81,7 +82,7 @@ export const useToast = () => {
       topOffset: 60,
       bottomOffset: 40,
     });
-  };
+  }, []);
 
   return {
     showSuccess,
