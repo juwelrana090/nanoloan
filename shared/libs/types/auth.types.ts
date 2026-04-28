@@ -242,10 +242,38 @@ export interface BiometricFaceVerifyResponse {
 }
 
 export interface BiometricStatusResponse {
+  id: string;
+  userId: string;
+  idType: string;
+  idCardImage: string;
+  idCardImageId: string;
   idVerified: boolean;
+  addressImage: string;
+  addressImageId: string;
   addressVerified: boolean;
+  faceImage: string;
+  faceImageId: string;
   faceVerified: boolean;
-  overallStatus: 'PENDING' | 'IN_PROGRESS' | 'VERIFIED' | 'FAILED';
-  completedSteps?: string[];
-  pendingSteps?: string[];
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED';
+  rawOcrText?: string;
+  extractedData?: {
+    name?: string;
+    address?: string;
+    idNumber?: string;
+    dateOfBirth?: string;
+  };
+  documentType?: string;
+  confidenceScore?: number;
+  createdAt: string;
+  updatedAt: string;
+  logs?: Array<{
+    id: string;
+    userId: string;
+    verificationType: 'ID' | 'ADDRESS' | 'FACE';
+    attempt: number;
+    result: boolean;
+    confidence?: number;
+    notes: string;
+    createdAt: string;
+  }>;
 }

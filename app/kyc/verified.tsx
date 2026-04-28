@@ -10,8 +10,7 @@ import { useEffect, useState, useRef } from 'react';
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 const AnimatedCheckmarkIcon = ({ progress }: { progress: Animated.Value }) => {
-  // Animate the path drawing
-  const pathLength = 24; // Approximate path length
+  const pathLength = 24;
 
   return (
     <Svg width={40} height={40} viewBox="0 0 24 24" fill="none">
@@ -22,16 +21,26 @@ const AnimatedCheckmarkIcon = ({ progress }: { progress: Animated.Value }) => {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={pathLength}
-        strokeDashoffset={progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [pathLength, 0],
-        }) as any}
+        strokeDashoffset={
+          progress.interpolate({
+            inputRange: [0, 1],
+            outputRange: [pathLength, 0],
+          }) as any
+        }
       />
     </Svg>
   );
 };
 
-const OrbitRing = ({ delay = 0, color = '#00C897', size = 130 }: { delay?: number; color?: string; size?: number }) => {
+const OrbitRing = ({
+  delay = 0,
+  color = '#00C897',
+  size = 130,
+}: {
+  delay?: number;
+  color?: string;
+  size?: number;
+}) => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +64,6 @@ const OrbitRing = ({ delay = 0, color = '#00C897', size = 130 }: { delay?: numbe
 
     animation.start();
 
-    // Add continuous pulsing effect
     const pulseAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
@@ -95,7 +103,23 @@ const OrbitRing = ({ delay = 0, color = '#00C897', size = 130 }: { delay?: numbe
   );
 };
 
-const AnimatedDot = ({ delay = 0, color = '#00C897', size = 8, top, right, bottom, left }: { delay?: number; color?: string; size?: number; top?: number; right?: number; bottom?: number; left?: number }) => {
+const AnimatedDot = ({
+  delay = 0,
+  color = '#00C897',
+  size = 8,
+  top,
+  right,
+  bottom,
+  left,
+}: {
+  delay?: number;
+  color?: string;
+  size?: number;
+  top?: number;
+  right?: number;
+  bottom?: number;
+  left?: number;
+}) => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -146,7 +170,9 @@ export default function VerifiedDoneScreen() {
   const dispatch = useAppDispatch();
   const [getBiometricStatus, { isLoading }] = useLazyGetBiometricStatusQuery();
 
-  const [verificationStatus, setVerificationStatus] = useState<'verified' | 'pending' | 'failed' | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<
+    'verified' | 'pending' | 'failed' | null
+  >(null);
 
   // Animation values
   const checkmarkProgress = useRef(new Animated.Value(0)).current;
@@ -156,18 +182,18 @@ export default function VerifiedDoneScreen() {
   const buttonScale = useRef(new Animated.Value(0.8)).current;
   const buttonOpacity = useRef(new Animated.Value(0)).current;
 
-  // Check verification status on mount and trigger animations
+  // Check verification status on mount
   useEffect(() => {
     const checkStatus = async () => {
       try {
         const response = await getBiometricStatus().unwrap();
         console.log('📊 Biometric status response:', response);
 
-        const { overallStatus } = response.data;
+        const { idVerified, addressVerified, faceVerified } = response.data;
 
-        if (overallStatus === 'VERIFIED') {
+        if (idVerified && addressVerified && faceVerified) {
           setVerificationStatus('verified');
-        } else if (overallStatus === 'FAILED') {
+        } else if (idVerified === false || addressVerified === false || faceVerified === false) {
           setVerificationStatus('failed');
         } else {
           setVerificationStatus('pending');
@@ -181,25 +207,22 @@ export default function VerifiedDoneScreen() {
     checkStatus();
   }, [getBiometricStatus]);
 
-  // Trigger success animations when status is determined
+  // Trigger animations when status is determined
   useEffect(() => {
     if (verificationStatus !== null && !isLoading) {
       const successAnimation = Animated.sequence([
-        // Animate badge scale
         Animated.timing(badgeScale, {
           toValue: 1,
           duration: 600,
           easing: Easing.out(Easing.back(1.2)),
           useNativeDriver: true,
         }),
-        // Animate checkmark drawing
         Animated.timing(checkmarkProgress, {
           toValue: 1,
           duration: 500,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: false, // strokeDashoffset requires non-native driver
+          useNativeDriver: false,
         }),
-        // Animate text fade-in
         Animated.parallel([
           Animated.timing(textOpacity, {
             toValue: 1,
@@ -213,7 +236,6 @@ export default function VerifiedDoneScreen() {
             useNativeDriver: true,
           }),
         ]),
-        // Animate button
         Animated.parallel([
           Animated.timing(buttonOpacity, {
             toValue: 1,
@@ -233,7 +255,16 @@ export default function VerifiedDoneScreen() {
 
       return () => successAnimation.stop();
     }
-  }, [verificationStatus, isLoading, badgeScale, checkmarkProgress, textOpacity, textTranslateY, buttonScale, buttonOpacity]);
+  }, [
+    verificationStatus,
+    isLoading,
+    badgeScale,
+    checkmarkProgress,
+    textOpacity,
+    textTranslateY,
+    buttonScale,
+    buttonOpacity,
+  ]);
 
   const handleDone = () => {
     dispatch(setIsAuthenticated(true));
@@ -244,11 +275,13 @@ export default function VerifiedDoneScreen() {
     router.push('/kyc/started');
   };
 
+  const isVerified = verificationStatus === 'verified';
+  const accentColor = isVerified ? '#00C897' : '#EF5350';
+
   return (
     <View
       style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}
       className="flex-1 items-center justify-between bg-[#F0FFF4] px-8">
-
       {isLoading || verificationStatus === null ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#00C897" />
@@ -261,62 +294,35 @@ export default function VerifiedDoneScreen() {
             <Animated.View
               className="relative mb-8 h-[140px] w-[140px] items-center justify-center"
               style={{ transform: [{ scale: badgeScale }] }}>
-
               {/* Animated orbit rings */}
-              <OrbitRing
-                delay={200}
-                size={130}
-                color={verificationStatus === 'verified' ? '#C8E6C9' : '#FFCDD2'}
-              />
-              <OrbitRing
-                delay={400}
-                size={100}
-                color={verificationStatus === 'verified' ? '#A5D6A7' : '#EF9A9A'}
-              />
+              <OrbitRing delay={200} size={130} color={isVerified ? '#C8E6C9' : '#FFCDD2'} />
+              <OrbitRing delay={400} size={100} color={isVerified ? '#A5D6A7' : '#EF9A9A'} />
 
               {/* Shield with animated checkmark */}
-              <View className={`h-[72px] w-[72px] items-center justify-center rounded-full shadow-lg ${
-                verificationStatus === 'verified' ? 'bg-[#00C897]' : 'bg-[#EF5350]'
-              }`}>
+              <View
+                style={{ backgroundColor: accentColor }}
+                className="h-[72px] w-[72px] items-center justify-center rounded-full shadow-lg">
                 <AnimatedCheckmarkIcon progress={checkmarkProgress} />
               </View>
 
               {/* Animated decorative dots */}
-              <AnimatedDot
-                delay={600}
-                size={8}
-                color={verificationStatus === 'verified' ? '#00C897' : '#EF5350'}
-                top={8}
-                right={16}
-              />
-              <AnimatedDot
-                delay={700}
-                size={6}
-                color="#A5D6A7"
-                bottom={12}
-                left={12}
-              />
-              <AnimatedDot
-                delay={800}
-                size={4}
-                color="#C8E6C9"
-                top={24}
-                left={8}
-              />
+              <AnimatedDot delay={600} size={8} color={accentColor} top={8} right={16} />
+              <AnimatedDot delay={700} size={6} color="#A5D6A7" bottom={12} left={12} />
+              <AnimatedDot delay={800} size={4} color="#C8E6C9" top={24} left={8} />
             </Animated.View>
 
             {/* Animated text */}
             <Animated.View
               style={{ opacity: textOpacity, transform: [{ translateY: textTranslateY }] }}>
-              <Text className={`mb-3 text-[28px] font-bold text-center ${
-                verificationStatus === 'verified' ? 'text-[#1A1A1A]' : 'text-[#EF5350]'
-              }`}>
-                {verificationStatus === 'verified' ? 'Verified' : 'Verification Pending'}
+              <Text
+                style={{ color: isVerified ? '#1A1A1A' : '#EF5350' }}
+                className="mb-3 text-center text-[28px] font-bold">
+                {isVerified ? 'Verified' : 'Verification Pending'}
               </Text>
 
               <Text className="text-center text-[14px] leading-5 text-[#888]">
-                {verificationStatus === 'verified'
-                  ? 'You currently have access to all of VAEX\'s\nfeatures and high limits'
+                {isVerified
+                  ? "You currently have access to all of VAEX's\nfeatures and high limits"
                   : 'Your verification is still in progress.\nPlease complete all required steps.'}
               </Text>
             </Animated.View>
@@ -324,62 +330,51 @@ export default function VerifiedDoneScreen() {
 
           {/* Animated button */}
           <Animated.View
+            className="w-full"
             style={{
               opacity: buttonOpacity,
               transform: [{ scale: buttonScale }],
             }}>
             <TouchableOpacity
-              onPress={verificationStatus === 'verified' ? handleDone : handleReverify}
-              activeOpacity={0.9}
-              className={`w-full flex-row items-center justify-center rounded-2xl ${
-                verificationStatus === 'verified'
-                  ? 'bg-[#00C897] shadow-lg shadow-[#00C897]/30'
-                  : 'bg-[#EF5350] shadow-lg shadow-[#EF5350]/30'
-              }`}
+              onPress={isVerified ? handleDone : handleReverify}
+              activeOpacity={0.85}
               style={{
                 height: 58,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 8,
+                borderRadius: 16,
+                backgroundColor: accentColor,
+                shadowColor: accentColor,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.35,
+                shadowRadius: 12,
+                elevation: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 10,
+                paddingHorizontal: 32,
               }}>
-              <View className="flex-row items-center gap-3">
-                {verificationStatus === 'verified' ? (
-                  <>
-                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                        stroke="white"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
-                    <Text className="text-[17px] font-bold text-white">Continue to Dashboard</Text>
-                  </>
+              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                {isVerified ? (
+                  <Path
+                    d="M5 12h14M13 6l6 6-6 6"
+                    stroke="white"
+                    strokeWidth={2.2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 ) : (
-                  <>
-                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path
-                        d="M4 4V9H4.58152M20 20V15H19.4185M4 9C4 10.0609 4.42143 11.0783 5.17157 11.8284C5.92172 12.5786 6.93913 13 8 13H9.32628M20 15C20 13.9391 19.5786 12.9217 18.8284 12.1716C18.0783 11.4214 17.0609 11 16 11H14.6737M14.6737 11L11 6M14.6737 11L18.3474 16M9.32628 13L5.65268 18M9.32628 13L12.9999 18"
-                        stroke="white"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </Svg>
-                    <Text className="text-[17px] font-bold text-white">Complete Verification</Text>
-                  </>
+                  <Path
+                    d="M1 4v6h6M23 20v-6h-6M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"
+                    stroke="white"
+                    strokeWidth={2.2}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 )}
-              </View>
-            </TouchableOpacity>
-
-            {/* Secondary action button */}
-            <TouchableOpacity
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-              className="mt-3 w-full items-center justify-center py-3">
-              <Text className="text-[14px] font-semibold text-[#888]">Go Back</Text>
+              </Svg>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: 'white', letterSpacing: 0.3 }}>
+                {isVerified ? 'Continue to Dashboard' : 'Re-Verification'}
+              </Text>
             </TouchableOpacity>
           </Animated.View>
         </>
