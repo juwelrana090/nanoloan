@@ -330,13 +330,56 @@ export default function VerifiedDoneScreen() {
             }}>
             <TouchableOpacity
               onPress={verificationStatus === 'verified' ? handleDone : handleReverify}
-              activeOpacity={0.8}
-              className={`h-[54px] w-full items-center justify-center rounded-full ${
-                verificationStatus === 'verified' ? 'bg-[#00C897]' : 'bg-[#EF5350]'
-              }`}>
-              <Text className="text-[17px] font-bold text-white">
-                {verificationStatus === 'verified' ? 'Done' : 'Re-verify'}
-              </Text>
+              activeOpacity={0.9}
+              className={`w-full flex-row items-center justify-center rounded-2xl ${
+                verificationStatus === 'verified'
+                  ? 'bg-[#00C897] shadow-lg shadow-[#00C897]/30'
+                  : 'bg-[#EF5350] shadow-lg shadow-[#EF5350]/30'
+              }`}
+              style={{
+                height: 58,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.3,
+                shadowRadius: 8,
+                elevation: 8,
+              }}>
+              <View className="flex-row items-center gap-3">
+                {verificationStatus === 'verified' ? (
+                  <>
+                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                        stroke="white"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                    <Text className="text-[17px] font-bold text-white">Continue to Dashboard</Text>
+                  </>
+                ) : (
+                  <>
+                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M4 4V9H4.58152M20 20V15H19.4185M4 9C4 10.0609 4.42143 11.0783 5.17157 11.8284C5.92172 12.5786 6.93913 13 8 13H9.32628M20 15C20 13.9391 19.5786 12.9217 18.8284 12.1716C18.0783 11.4214 17.0609 11 16 11H14.6737M14.6737 11L11 6M14.6737 11L18.3474 16M9.32628 13L5.65268 18M9.32628 13L12.9999 18"
+                        stroke="white"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                    <Text className="text-[17px] font-bold text-white">Complete Verification</Text>
+                  </>
+                )}
+              </View>
+            </TouchableOpacity>
+
+            {/* Secondary action button */}
+            <TouchableOpacity
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+              className="mt-3 w-full items-center justify-center py-3">
+              <Text className="text-[14px] font-semibold text-[#888]">Go Back</Text>
             </TouchableOpacity>
           </Animated.View>
         </>

@@ -201,6 +201,7 @@ export interface BiometricStartResponse {
 export interface BiometricIdVerifyRequest {
   idType: 'NID' | 'PASSPORT';
   idCardImage: any; // React Native file object: { uri, name, type }
+  idCardImageBack?: any; // Optional back image: { uri, name, type }
 }
 
 export interface BiometricIdVerifyResponse {

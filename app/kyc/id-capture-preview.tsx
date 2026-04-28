@@ -516,7 +516,9 @@ export default function IDCapturePreviewScreen() {
               onPress={handleConfirmAndContinue}
               activeOpacity={0.8}
               className={`mt-8 h-[54px] items-center justify-center rounded-full ${
-                isLoading || isVerifying || isSubmitting || !canProceed() ? 'bg-[#CCC]' : 'bg-[#00C897]'
+                isLoading || isVerifying || isSubmitting || !canProceed()
+                  ? 'bg-[#CCC]'
+                  : 'bg-[#00C897]'
               }`}
               disabled={isLoading || isVerifying || isSubmitting || !canProceed()}>
               <Text className="text-[17px] font-bold text-white">
