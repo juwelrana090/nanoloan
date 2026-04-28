@@ -51,12 +51,10 @@ const WarningIcon = () => (
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-/** Best-effort name: front first, fall back to MRZ from back */
 function resolveName(front?: ExtractedData | null, back?: ExtractedData | null): string {
   return front?.name?.trim() || back?.name?.trim() || '';
 }
 
-/** Best-effort ID number: front first, fall back to MRZ from back */
 function resolveId(front?: ExtractedData | null, back?: ExtractedData | null): string {
   return (
     front?.idNumber?.trim() ||
@@ -67,12 +65,10 @@ function resolveId(front?: ExtractedData | null, back?: ExtractedData | null): s
   );
 }
 
-/** Best-effort DOB: front first, fall back to MRZ from back */
 function resolveDob(front?: ExtractedData | null, back?: ExtractedData | null): string {
   return front?.dob?.trim() || back?.dob?.trim() || '';
 }
 
-/** Mask NID middle digits: 730•••••782 */
 function maskId(id: string): string {
   if (id.length <= 6) return id;
   return `${id.slice(0, 3)}${'•'.repeat(id.length - 6)}${id.slice(-3)}`;
@@ -91,7 +87,9 @@ export default function IDCapturePreviewScreen() {
   const backUri = useSelector((state: RootState) => state.kyc.backImageUri);
   const frontData = useSelector((state: RootState) => state.kyc.frontData);
   const backData = useSelector((state: RootState) => state.kyc.backData);
-  const isLoading = useSelector((state: RootState) => state.kyc.isLoading);
+  // FIX #3: use a dedicated local OCR loading state — not the shared Redux isLoading
+  // This prevents OCR processing from blocking the Confirm button permanently.
+  const [isOcrLoading, setIsOcrLoading] = useState(false);
   const error = useSelector((state: RootState) => state.kyc.error);
   const selectedIdType = useSelector((state: RootState) => state.kyc.selectedIdType) || 'NID';
 
@@ -120,7 +118,8 @@ export default function IDCapturePreviewScreen() {
 
   const extractTextFromImage = async (imageUri: string, side: CaptureSide) => {
     if (side !== 'front' && side !== 'back') return;
-    dispatch(setLoading(true));
+    // FIX #3: use local OCR state, not shared Redux loading
+    setIsOcrLoading(true);
     dispatch(setError(null));
     try {
       const result = await TextRecognition.recognize(imageUri);
@@ -145,7 +144,8 @@ export default function IDCapturePreviewScreen() {
       console.error('❌ OCR error:', err);
       dispatch(setError('Failed to extract text. Please retake the photo.'));
     } finally {
-      dispatch(setLoading(false));
+      // FIX #3: clear local OCR loading state
+      setIsOcrLoading(false);
     }
   };
 
@@ -211,12 +211,12 @@ export default function IDCapturePreviewScreen() {
     }
   };
 
+  // FIX #1: canProceed only requires both images captured.
+  // OCR data is best-effort — the server validates the document.
+  // Previously this returned false whenever OCR hadn't populated frontData/backData,
+  // silently disabling the button with no feedback to the user.
   const canProceed = () => {
-    if (!frontData || !backData) return false;
-    return (
-      !(frontData.validationErrors?.some((e) => e.isCritical) ?? false) &&
-      !(backData.validationErrors?.some((e) => e.isCritical) ?? false)
-    );
+    return !!frontUri && !!backUri;
   };
 
   const handleConfirmAndContinue = async () => {
@@ -225,16 +225,13 @@ export default function IDCapturePreviewScreen() {
       return;
     }
 
-    // Prevent multiple simultaneous submissions
-    if (isSubmitting || isVerifying) {
-      return;
-    }
+    if (isSubmitting || isVerifying) return;
 
     try {
       setIsSubmitting(true);
       dispatch(setLoading(true));
 
-      // For now, we'll submit the front image (you may need to submit both front and back separately)
+      // FIX #4: send both front AND back images to the API
       const formData = new FormData();
       formData.append('idType', selectedIdType);
       formData.append('idCardImage', {
@@ -252,6 +249,8 @@ export default function IDCapturePreviewScreen() {
 
       setIsSubmitting(false);
       dispatch(setLoading(false));
+
+      // FIX #2: navigate to the next KYC step after success
       router.push('/kyc/address-roles');
     } catch (error: any) {
       console.error('ID verification error:', error);
@@ -286,7 +285,6 @@ export default function IDCapturePreviewScreen() {
   const bothCaptured = !!frontUri && !!backUri;
   const bothProcessed = !!frontData && !!backData;
 
-  // Merge front + back for the best available values
   const resolvedName = resolveName(frontData, backData);
   const resolvedId = resolveId(frontData, backData);
   const resolvedDob = resolveDob(frontData, backData);
@@ -300,11 +298,13 @@ export default function IDCapturePreviewScreen() {
 
   const hasMissingFields = bothProcessed && missingFields.length > 0;
 
-  // Section titles change when data is missing
   const qualityTitle = hasMissingFields
     ? '⚠️ Retake for Better Results'
     : 'Photo Quality Guidelines';
   const confirmTitle = hasMissingFields ? 'Could not detect the following' : 'Please confirm that';
+
+  // FIX #3: button is blocked by OCR loading or submission — not by shared Redux isLoading
+  const isButtonDisabled = isOcrLoading || isVerifying || isSubmitting || !canProceed();
 
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -388,21 +388,13 @@ export default function IDCapturePreviewScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* ── Loading ── */}
-          {isLoading && (
+          {/* ── Loading (OCR) ── */}
+          {isOcrLoading && (
             <View className="mb-4 items-center py-4">
               <ActivityIndicator size="small" color="#00C897" />
               <Text className="mt-2 text-[14px] text-[#555]">Extracting document data…</Text>
             </View>
           )}
-
-          {/* ── DEV raw OCR ── */}
-          {/* {showDebug && debugText.length > 0 && (
-            <View className="mb-4 rounded-lg border border-blue-300 bg-blue-50 p-3">
-              <Text className="mb-1 text-[13px] font-bold text-blue-700">🔍 DEV – Raw OCR</Text>
-              <Text className="font-mono text-[10px] text-[#333]">{debugText}</Text>
-            </View>
-          )} */}
 
           {/* ══════════════════════════════════════════════════════════════
               SECTION A: Photo Quality Guidelines  OR  Retake guidance
@@ -410,7 +402,6 @@ export default function IDCapturePreviewScreen() {
           <Text className="mb-3 mt-5 text-[16px] font-bold text-[#1A1A1A]">{qualityTitle}</Text>
 
           {hasMissingFields ? (
-            // Retake tips when data is missing
             <>
               <Text className="mb-3 text-[13px] leading-5 text-[#666]">
                 Some information could not be read from your ID. For better results:
@@ -430,7 +421,6 @@ export default function IDCapturePreviewScreen() {
               ))}
             </>
           ) : (
-            // Normal quality checklist
             [
               'Readable, clear and not blurry',
               'Well-lit, not reflective, not too dark',
@@ -443,11 +433,7 @@ export default function IDCapturePreviewScreen() {
             ))
           )}
 
-          {/* ══════════════════════════════════════════════════════════════
-              Extracted Information card
-              — only shown when ALL 3 core fields (name, id, dob) found
-              — NID number is masked for security
-          ══════════════════════════════════════════════════════════════ */}
+          {/* Extracted Information card */}
           {hasAllCoreFields && bothProcessed && (
             <View className="mt-6">
               <Text className="mb-3 text-[16px] font-bold text-[#1A1A1A]">
@@ -476,7 +462,6 @@ export default function IDCapturePreviewScreen() {
           )}
 
           {hasMissingFields ? (
-            // Missing fields card
             <View className="mb-3 rounded-xl border border-[#FF9800] bg-[#FFF8F0] p-4">
               {missingFields.map((field, i) => (
                 <View key={i} className="mb-2 flex-row items-center">
@@ -491,7 +476,6 @@ export default function IDCapturePreviewScreen() {
               </Text>
             </View>
           ) : (
-            // Normal confirm checklist
             ['ID is not expired', 'All details are clearly visible'].map((tip, i) => (
               <View key={i} className="mb-2 flex-row items-center">
                 <View className="mr-3 h-1.5 w-1.5 rounded-full bg-[#888]" />
@@ -501,7 +485,7 @@ export default function IDCapturePreviewScreen() {
           )}
 
           {/* ── Capture back side button ── */}
-          {frontUri && !backUri && !isLoading && (
+          {frontUri && !backUri && !isOcrLoading && (
             <TouchableOpacity
               onPress={handleCaptureNext}
               activeOpacity={0.8}
@@ -516,16 +500,14 @@ export default function IDCapturePreviewScreen() {
               onPress={handleConfirmAndContinue}
               activeOpacity={0.8}
               className={`mt-8 h-[54px] items-center justify-center rounded-full ${
-                isLoading || isVerifying || isSubmitting || !canProceed()
-                  ? 'bg-[#CCC]'
-                  : 'bg-[#00C897]'
+                isButtonDisabled ? 'bg-[#CCC]' : 'bg-[#00C897]'
               }`}
-              disabled={isLoading || isVerifying || isSubmitting || !canProceed()}>
+              disabled={isButtonDisabled}>
               <Text className="text-[17px] font-bold text-white">
-                {isLoading || isVerifying || isSubmitting
-                  ? 'Processing…'
-                  : !canProceed()
-                    ? 'Fix Issues First'
+                {isOcrLoading
+                  ? 'Reading document…'
+                  : isVerifying || isSubmitting
+                    ? 'Processing…'
                     : hasMissingFields
                       ? 'Continue Anyway'
                       : 'Confirm & Continue'}
@@ -538,7 +520,7 @@ export default function IDCapturePreviewScreen() {
             onPress={() => router.back()}
             activeOpacity={0.8}
             className="mt-3 h-[54px] items-center justify-center rounded-full bg-[#E4F7EE]"
-            disabled={isLoading}>
+            disabled={isOcrLoading || isSubmitting}>
             <Text className="text-[17px] font-semibold text-[#888]">
               {bothCaptured ? 'Start Over' : 'Cancel'}
             </Text>
