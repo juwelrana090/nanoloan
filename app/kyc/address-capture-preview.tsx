@@ -70,7 +70,7 @@ export default function AddressCapturePreviewScreen() {
         type: 'image/jpeg',
       } as any);
 
-      const response = await verifyAddress(formData as any).unwrap();
+      const response = await verifyAddress(formData).unwrap();
 
       showSuccess({
         title: 'Address Verified',

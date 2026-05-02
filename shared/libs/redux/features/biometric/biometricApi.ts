@@ -2,9 +2,7 @@ import { apiSlice } from '@/shared/libs/redux/apiSlice';
 import type {
   BiometricStartRequest,
   BiometricStartResponse,
-  BiometricIdVerifyRequest,
   BiometricIdVerifyResponse,
-  BiometricAddressVerifyRequest,
   BiometricAddressVerifyResponse,
   BiometricFaceVerifyData,
   ApiSuccessResponse,
@@ -12,7 +10,7 @@ import type {
 
 export const biometricApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // Start biometric verification session
+    // POST /biometric/start
     startVerification: builder.mutation<ApiSuccessResponse<BiometricStartResponse>, BiometricStartRequest>({
       query: () => ({
         url: '/biometric/start',
@@ -20,35 +18,38 @@ export const biometricApi = apiSlice.injectEndpoints({
       }),
     }),
 
-    // Upload ID card for verification
-    verifyId: builder.mutation<ApiSuccessResponse<BiometricIdVerifyResponse>, BiometricIdVerifyRequest>({
-      query: (data) => ({
+    // POST /biometric/id-verify
+    // multipart/form-data  fields: idCardImage (file), idType (string)
+    // formData: true — tells fetchBaseQuery NOT to JSON.stringify; browser sets boundary automatically
+    verifyId: builder.mutation<ApiSuccessResponse<BiometricIdVerifyResponse>, FormData>({
+      query: (formData) => ({
         url: '/biometric/id-verify',
         method: 'POST',
-        body: data,
+        body: formData,
+        formData: true,
       }),
     }),
 
-    // Upload address document for verification
-    verifyAddress: builder.mutation<
-      ApiSuccessResponse<BiometricAddressVerifyResponse>,
-      BiometricAddressVerifyRequest
-    >({
-      query: (data) => ({
+    // POST /biometric/address-verify
+    // multipart/form-data  field: addressImage (file)
+    verifyAddress: builder.mutation<ApiSuccessResponse<BiometricAddressVerifyResponse>, FormData>({
+      query: (formData) => ({
         url: '/biometric/address-verify',
         method: 'POST',
-        body: data,
+        body: formData,
+        formData: true,
       }),
     }),
 
-    // POST /v1/biometric/face-verify
-    // multipart/form-data  field: faceImage (binary)
+    // POST /biometric/face-verify
+    // multipart/form-data  field: faceImage (file)
     // response.data: { confidence: number, passed: boolean }  threshold: 0.8
     faceVerify: builder.mutation<ApiSuccessResponse<BiometricFaceVerifyData>, FormData>({
       query: (formData) => ({
         url: '/biometric/face-verify',
         method: 'POST',
         body: formData,
+        formData: true,
       }),
     }),
   }),

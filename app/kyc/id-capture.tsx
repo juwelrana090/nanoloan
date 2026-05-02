@@ -51,6 +51,11 @@ export default function IDCaptureScreen() {
           height: photo.height,
         });
 
+        // Turn off flash after capture
+        if (flash === 'on') {
+          setFlash('off');
+        }
+
         // Crop to frame area only
         const dimensions = getPhotoDimensions(photo);
         console.log('📏 Photo dimensions:', dimensions);

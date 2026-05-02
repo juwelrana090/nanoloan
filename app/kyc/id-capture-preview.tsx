@@ -240,7 +240,7 @@ export default function IDCapturePreviewScreen() {
         type: 'image/jpeg',
       } as any);
 
-      const response = await verifyId(formData as any).unwrap();
+      const response = await verifyId(formData).unwrap();
 
       showSuccess({
         title: 'ID Verified',

@@ -298,7 +298,7 @@ export default function FacialRecognitionScreen() {
         });
 
         // Call the face verification API with FormData
-        const response = await verifyFace(formData as any).unwrap();
+        const response = await verifyFace(formData).unwrap();
         console.log('✅ Face verification response:', response);
 
         const { confidence, passed } = response.data;

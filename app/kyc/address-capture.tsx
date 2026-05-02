@@ -31,6 +31,11 @@ export default function AddressCaptureScreen() {
           height: photo.height,
         });
 
+        // Turn off flash after capture
+        if (flash === 'on') {
+          setFlash('off');
+        }
+
         // Navigate to crop screen
         router.push({
           pathname: '/kyc/address-capture-crop',
