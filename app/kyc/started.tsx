@@ -7,6 +7,7 @@ import { useStartVerificationMutation } from '@/shared/libs/redux/features/biome
 import { useAppDispatch } from '@/shared/hooks/useAppSelector';
 import { setBiometricSessionId } from '@/shared/libs/redux/features/kyc/kycSlice';
 import { useToast } from '@/shared/hooks/useToast';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 
 const steps = [
   {
@@ -27,6 +28,7 @@ const steps = [
 ];
 
 export default function StartedVerificationScreen() {
+  const { scrollPaddingBottom } = useSafePadding();
   const [startVerification, { isLoading }] = useStartVerificationMutation();
   const dispatch = useAppDispatch();
   const { showSuccess, showError } = useToast();
@@ -63,7 +65,7 @@ export default function StartedVerificationScreen() {
       <KycHeader title="Let's Get Started" />
       <KycCard>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 28, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 28, paddingBottom: scrollPaddingBottom }}
           showsVerticalScrollIndicator={false}>
           <Text className="mb-8 text-[14px] leading-5 text-[#888]">
             To ensure the security of your account and protect against fraud, we require you to

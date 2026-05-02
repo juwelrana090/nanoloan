@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import Svg, { Path, Rect } from 'react-native-svg';
 
 const ComingSoonIcon = () => (
@@ -12,11 +12,11 @@ const ComingSoonIcon = () => (
 );
 
 export default function CategoryScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
 
   return (
     <View style={{ flex: 1, backgroundColor: '#00C897' }}>
-      <View style={{ paddingTop: insets.top }} className="px-5 pb-4">
+      <View style={{ paddingTop }} className="px-5 pb-4">
         <Text className="text-[22px] font-extrabold text-[#0D2B1E]">Category</Text>
         <Text className="text-[13px] text-[#0D2B1E]/70">Coming Soon</Text>
       </View>

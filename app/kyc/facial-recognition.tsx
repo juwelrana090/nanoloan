@@ -18,7 +18,7 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import * as FaceDetector from 'expo-face-detector';
 import { useRef, useState, useCallback } from 'react';
@@ -119,7 +119,7 @@ function OvalGuide({ status }: { status: Status }) {
 export default function FacialRecognitionScreen() {
   console.log('🎯 FacialRecognitionScreen rendering...');
 
-  const insets = useSafeAreaInsets();
+  const { paddingTop, paddingBottomForModal } = useSafePadding();
   const dispatch = useDispatch();
   const cameraRef = useRef<any>(null);
 
@@ -412,7 +412,7 @@ export default function FacialRecognitionScreen() {
         <View className="absolute inset-0 bg-black/60" />
 
         <View
-          style={{ paddingTop: insets.top + 12 }}
+          style={{ paddingTop: paddingTop + 12 }}
           className="absolute left-0 right-0 top-0 z-10 px-5">
           <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
             <Text className="text-[15px] font-medium text-white/70">← Back</Text>
@@ -493,7 +493,7 @@ export default function FacialRecognitionScreen() {
 
       {/* ── Top bar ── */}
       <View
-        style={{ paddingTop: insets.top + 8 }}
+        style={{ paddingTop: paddingTop + 8 }}
         className="absolute left-0 right-0 top-0 z-20 flex-row items-center justify-between px-5 pb-2">
         <TouchableOpacity
           onPress={() => router.back()}
@@ -531,7 +531,7 @@ export default function FacialRecognitionScreen() {
 
       {/* ── Bottom area ── */}
       <View
-        style={{ paddingBottom: insets.bottom + 16 }}
+        style={{ paddingBottom: paddingBottomForModal }}
         className="absolute bottom-0 left-0 right-0 z-10 items-center px-8">
         {/* Shutter button */}
         <TouchableOpacity

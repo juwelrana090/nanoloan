@@ -12,7 +12,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { useDispatch } from 'react-redux';
 import { setAddressImage } from '@/shared/libs/redux/features/kyc/kycSlice';
@@ -153,7 +153,7 @@ const SkipIcon = () => (
 export default function AddressCaptureCropScreen() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
   const dispatch = useDispatch();
-  const insets = useSafeAreaInsets();
+  const { paddingTop, paddingBottomForModal } = useSafePadding();
 
   const [cropping, setCropping] = useState(false);
   const [crop, setCrop] = useState({ x: INIT.x, y: INIT.y, w: INIT.w, h: INIT.h });
@@ -431,7 +431,7 @@ export default function AddressCaptureCropScreen() {
           TOP BAR
       ══════════════════════════════════════ */}
       <View
-        style={{ paddingTop: insets.top + 10 }}
+        style={{ paddingTop: paddingTop + 10 }}
         className="absolute left-0 right-0 top-0 z-30 flex-row items-center justify-between bg-black/55 px-4 pb-3">
         <TouchableOpacity
           onPress={() => router.back()}
@@ -464,7 +464,7 @@ export default function AddressCaptureCropScreen() {
           BOTTOM TOOLBAR
       ══════════════════════════════════════ */}
       <View
-        style={{ paddingBottom: insets.bottom + 12 }}
+        style={{ paddingBottom: paddingBottomForModal }}
         className="absolute bottom-0 left-0 right-0 z-30 flex-row items-center justify-between bg-black/70 px-6 pt-4">
         <TouchableOpacity
           onPress={() => setCrop({ x: INIT.x, y: INIT.y, w: INIT.w, h: INIT.h })}

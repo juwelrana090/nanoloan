@@ -3,19 +3,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 import React, { useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { useVerifyEmail } from '@/modules/verify-email/hooks/useVerifyEmail';
+import { KeyboardAwareScreen } from '@/shared/components/KeyboardAwareScreen';
 
 const OTP_LENGTH = 6;
 
 const EmailOTPVerificationScreen = () => {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
   const { userId, email } = useLocalSearchParams<{ userId: string; email: string }>();
   const { verify, resend, isVerifying, isResending, error, resendSuccess } = useVerifyEmail(
     email ?? ''
@@ -57,18 +56,26 @@ const EmailOTPVerificationScreen = () => {
   }, [isDisabled, resend]);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, paddingTop: insets.top }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View className="flex-1 bg-[#00C897]">
-        {/* Header */}
-        <View className="px-6 pb-10">
-          <Text className="text-[28px] font-bold text-[#0D2B1E]">Email OTP Verification</Text>
-        </View>
+    <View style={{ flex: 1, paddingTop }} className="bg-[#00C897]">
+      {/* Header */}
+      <View className="px-6 pb-10">
+        <Text className="text-[28px] font-bold text-[#0D2B1E]">Email OTP Verification</Text>
+      </View>
 
-        {/* White card */}
-        <View className="flex-1 justify-between rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4] px-6 pb-10 pt-10">
-          <View>
+      {/* White card */}
+      <KeyboardAwareScreen
+        backgroundColor="#F0FFF4"
+        style={{ borderTopLeftRadius: 40, borderTopRightRadius: 40 }}
+        scrollViewProps={{
+          contentContainerStyle: {
+            flexGrow: 1,
+            justifyContent: 'space-between',
+            paddingHorizontal: 24,
+            paddingTop: 40,
+            paddingBottom: 40,
+          },
+        }}>
+        <View>
             {/* Description */}
             <Text className="mb-6 text-[15px] leading-6 text-[#1A1A1A]">
               Enter the verification code we sent to{'\n'}
@@ -142,9 +149,8 @@ const EmailOTPVerificationScreen = () => {
               </Text>
             )}
           </TouchableOpacity>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAwareScreen>
+    </View>
   );
 };
 

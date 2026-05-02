@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import OnBoarding from '@/shared/components/welcome/OnBoarding';
 import AfterAuthScreen from '@/shared/components/welcome/AfterAuthScreen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { hasCompletedOnboarding, markOnboardingCompleted } from '@/shared/utils/onboarding';
 
 export default function WelcomeScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -44,7 +44,7 @@ export default function WelcomeScreen() {
         locations={[0.0001, 0.9999]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
-        style={{ flex: 1, paddingTop: insets.top }}>
+        style={{ flex: 1, paddingTop }}>
         <StatusBar style="light" backgroundColor="#00C897" translucent={false} />
       </LinearGradient>
     );
@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
       locations={[0.0001, 0.9999]}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
-      style={{ flex: 1, paddingTop: insets.top }}>
+      style={{ flex: 1, paddingTop }}>
       <StatusBar style="light" backgroundColor="#00C897" translucent={false} />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}

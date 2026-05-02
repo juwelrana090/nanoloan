@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native'
 import { router } from 'expo-router'
 import { KycHeader, KycCard } from '@/shared/components/kyc'
 import Svg, { Path, Circle } from 'react-native-svg'
+import { useSafePadding } from '@/shared/hooks/useSafePadding'
 
 const LocationIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
@@ -11,12 +12,13 @@ const LocationIcon = () => (
 )
 
 export default function AddressRolesScreen() {
+  const { scrollPaddingBottom } = useSafePadding()
   return (
     <View className="flex-1 bg-[#00C897]">
       <KycHeader title="Address Verify" showBar currentStep={4} totalSteps={5} />
       <KycCard>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: scrollPaddingBottom }}
           showsVerticalScrollIndicator={false}
         >
           {/* Address card illustration */}

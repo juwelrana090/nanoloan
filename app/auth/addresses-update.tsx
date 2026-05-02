@@ -3,13 +3,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import { useState, useEffect } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { KeyboardAwareScreen } from '@/shared/components/KeyboardAwareScreen';
 import {
   useAddAddressMutation,
   useLazyGetAddressesQuery,
@@ -121,7 +121,7 @@ const InputField = ({
 );
 
 export default function AddressesUpdateScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop, scrollPaddingBottom } = useSafePadding();
   const [addAddress, { isLoading }] = useAddAddressMutation();
   const [getAddresses, { isLoading: isLoadingFetch }] = useLazyGetAddressesQuery();
   const { showSuccess, showError } = useToast();
@@ -291,7 +291,7 @@ export default function AddressesUpdateScreen() {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
+    <View style={{ flex: 1, paddingTop }} className="bg-[#00C897]">
       {/* Header */}
       <View className="px-6 pb-10 pt-6">
         <Text className="text-[28px] font-bold text-[#0D2B1E]">
@@ -312,11 +312,16 @@ export default function AddressesUpdateScreen() {
       </View>
 
       {/* White card */}
-      <View className="flex-1 rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4]">
-        <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScreen
+        backgroundColor="#F0FFF4"
+        style={{ borderTopLeftRadius: 40, borderTopRightRadius: 40 }}
+        scrollViewProps={{
+          contentContainerStyle: {
+            paddingHorizontal: 24,
+            paddingTop: 32,
+            paddingBottom: scrollPaddingBottom,
+          },
+        }}>
           <Dropdown
             label="Type"
             placeholder="Select the  Type"
@@ -405,8 +410,7 @@ export default function AddressesUpdateScreen() {
               </Text>
             )}
           </TouchableOpacity>
-        </ScrollView>
-      </View>
+      </KeyboardAwareScreen>
     </View>
   );
 }

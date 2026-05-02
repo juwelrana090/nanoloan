@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { FlashOffIcon, FlashOnIcon, CameraReverseIcon } from '@/shared/components/UI/icons/svg-icons';
@@ -21,7 +21,7 @@ const FRAME_TOP = 274;
 const FRAME_LEFT = (width - FRAME_WIDTH) / 2;
 
 export default function IDCaptureScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
   const { side = 'front' } = useLocalSearchParams<{ side: 'front' | 'back' }>();
   const [permission, requestPermission] = useCameraPermissions();
   const [capturing, setCapturing] = useState(false);
@@ -36,7 +36,7 @@ export default function IDCaptureScreen() {
     FRAME_TOP,
     FRAME_LEFT,
     screenWidth: width,
-    safeAreaTop: insets.top,
+    safeAreaTop: paddingTop,
   });
 
   const handleCapture = async () => {
@@ -172,7 +172,7 @@ export default function IDCaptureScreen() {
 
       {/* Top bar - simplified with minimal elements */}
       <View
-        style={{ paddingTop: insets.top + 8 }}
+        style={{ paddingTop: paddingTop + 8 }}
         className="absolute left-0 right-0 top-0 z-10 flex-row justify-between px-6">
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
           <View className="h-8 w-8 items-center justify-center">

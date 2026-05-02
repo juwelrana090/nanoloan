@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Svg, Path } from 'react-native-svg';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { useLogin } from '@/modules/login/hooks/useLogin';
+import { KeyboardAwareScreen } from '@/shared/components/KeyboardAwareScreen';
 
 export default function LoginScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
   const router = useRouter();
   const { login, isLoading, error } = useLogin();
   const [identifier, setIdentifier] = useState('');
@@ -24,16 +25,27 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
+    <View style={{ flex: 1, paddingTop }} className="bg-[#00C897]">
       {/* Header */}
       <View className="items-center pb-10">
         <Text className="text-[28px] font-bold text-[#0D2B1E]">Account Login</Text>
       </View>
 
       {/* White card */}
-      <View className="flex-1 justify-between rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4] px-6 pb-8 pt-10">
+      <KeyboardAwareScreen
+        backgroundColor="#F0FFF4"
+        style={{ borderTopLeftRadius: 40, borderTopRightRadius: 40 }}
+        scrollViewProps={{
+          contentContainerStyle: {
+            flexGrow: 1,
+            justifyContent: 'space-between',
+            paddingHorizontal: 24,
+            paddingTop: 40,
+            paddingBottom: 32,
+          },
+        }}>
         {/* Form fields */}
-        <View className="mb-6 flex-1 justify-end gap-4">
+        <View className="gap-4">
           {/* Error message */}
           {error ? (
             <View className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
@@ -147,7 +159,7 @@ export default function LoginScreen() {
             </Text>
           </Text>
         </View>
-      </View>
+      </KeyboardAwareScreen>
     </View>
   );
 }

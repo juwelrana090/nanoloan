@@ -3,18 +3,18 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
 } from 'react-native';
 import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { useRegister } from '@/modules/register/hooks/useRegister';
 import DatePickerField from '@/shared/components/DatePickerField';
+import { KeyboardAwareScreen } from '@/shared/components/KeyboardAwareScreen';
 
 export default function RegisterScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop, scrollPaddingBottom } = useSafePadding();
   const router = useRouter();
   const { register, isLoading, error } = useRegister();
 
@@ -72,18 +72,23 @@ export default function RegisterScreen() {
   const displayError = localError || error;
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top }} className="bg-[#00C897]">
+    <View style={{ flex: 1, paddingTop }} className="bg-[#00C897]">
       {/* Header */}
       <View className="items-center pb-10">
         <Text className="text-[28px] font-bold text-[#0D2B1E]">Create Account</Text>
       </View>
 
       {/* White card */}
-      <View className="flex-1 rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4]">
-        <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 32, paddingBottom: 32 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+      <KeyboardAwareScreen
+        backgroundColor="#F0FFF4"
+        style={{ borderTopLeftRadius: 40, borderTopRightRadius: 40 }}
+        scrollViewProps={{
+          contentContainerStyle: {
+            paddingHorizontal: 24,
+            paddingTop: 32,
+            paddingBottom: scrollPaddingBottom,
+          },
+        }}>
           {/* Error message */}
           {displayError ? (
             <View className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
@@ -247,8 +252,7 @@ export default function RegisterScreen() {
               </Text>
             </Text>
           </View>
-        </ScrollView>
-      </View>
+      </KeyboardAwareScreen>
     </View>
   );
 }

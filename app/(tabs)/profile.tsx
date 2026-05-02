@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { useRouter } from 'expo-router';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
 import { setLogout } from '@/shared/libs/redux/features/auth/authSlice';
@@ -16,7 +16,7 @@ import {
 } from '@/components/UI/icons/svg-icons';
 
 export default function ProfileScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop, scrollPaddingBottom } = useSafePadding();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -87,13 +87,6 @@ export default function ProfileScreen() {
       color: '#6DB6FE',
       onPress: () => {},
     },
-    {
-      id: 'debug-network',
-      title: '🔧 Debug Network',
-      icon: <SettingsIcon />,
-      color: '#FF6B6B',
-      onPress: () => router.push('/debug-network' as any),
-    },
   ];
 
   return (
@@ -102,19 +95,17 @@ export default function ProfileScreen() {
         {/* Header */}
         <View
           style={{
-            paddingTop: insets.top + 20,
+            paddingTop: paddingTop + 20,
             paddingHorizontal: 38,
-            paddingBottom: 20,
-          }}
-        >
+            paddingBottom: scrollPaddingBottom,
+          }}>
           {/* Top Row */}
           <View
             style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-            }}
-          >
+            }}>
             <TouchableOpacity onPress={() => router.back()}>
               <BackIcon />
             </TouchableOpacity>
@@ -126,8 +117,7 @@ export default function ProfileScreen() {
                 height: 30,
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
-            >
+              }}>
               <BellIcon />
             </View>
           </View>
@@ -137,16 +127,14 @@ export default function ProfileScreen() {
             style={{
               marginTop: 20,
               alignItems: 'center',
-            }}
-          >
+            }}>
             <Text
               style={{
                 fontFamily: 'Poppins-Bold',
                 fontSize: 20,
                 color: '#0E3E3E',
                 textTransform: 'capitalize',
-              }}
-            >
+              }}>
               Profile
             </Text>
           </View>
@@ -156,8 +144,7 @@ export default function ProfileScreen() {
             style={{
               marginTop: 10,
               alignItems: 'center',
-            }}
-          >
+            }}>
             <View
               style={{
                 width: 117,
@@ -167,15 +154,13 @@ export default function ProfileScreen() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 20,
-              }}
-            >
+              }}>
               <Text
                 style={{
                   fontFamily: 'Poppins-Bold',
                   fontSize: 48,
                   color: '#00D09E',
-                }}
-              >
+                }}>
                 {user?.fullName?.charAt(0).toUpperCase() || 'U'}
               </Text>
             </View>
@@ -187,8 +172,7 @@ export default function ProfileScreen() {
                 fontSize: 20,
                 color: '#0E3E3E',
                 textTransform: 'capitalize',
-              }}
-            >
+              }}>
               {user?.fullName || 'User Name'}
             </Text>
 
@@ -199,14 +183,12 @@ export default function ProfileScreen() {
                 fontSize: 13,
                 color: '#093030',
                 marginTop: 4,
-              }}
-            >
+              }}>
               ID:{' '}
               <Text
                 style={{
                   fontFamily: 'Poppins-Light',
-                }}
-              >
+                }}>
                 {user?.id || 'N/A'}
               </Text>
             </Text>
@@ -221,10 +203,9 @@ export default function ProfileScreen() {
             borderTopRightRadius: 70,
             paddingHorizontal: 38,
             paddingTop: 80,
-            paddingBottom: 40,
+            paddingBottom: scrollPaddingBottom,
             minHeight: 600,
-          }}
-        >
+          }}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={item.id}
@@ -234,8 +215,7 @@ export default function ProfileScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginBottom: index === menuItems.length - 1 ? 0 : 35,
-              }}
-            >
+              }}>
               <View
                 style={{
                   width: 57,
@@ -244,8 +224,7 @@ export default function ProfileScreen() {
                   backgroundColor: item.color,
                   alignItems: 'center',
                   justifyContent: 'center',
-                }}
-              >
+                }}>
                 {item.icon}
               </View>
               <Text
@@ -255,8 +234,7 @@ export default function ProfileScreen() {
                   color: '#093030',
                   marginLeft: 13,
                   textTransform: 'capitalize',
-                }}
-              >
+                }}>
                 {item.title}
               </Text>
             </TouchableOpacity>
@@ -272,8 +250,7 @@ export default function ProfileScreen() {
               alignItems: 'center',
               marginTop: 35,
               opacity: isLoggingOut ? 0.5 : 1,
-            }}
-          >
+            }}>
             <View
               style={{
                 width: 57,
@@ -282,8 +259,7 @@ export default function ProfileScreen() {
                 backgroundColor: '#3299FF',
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
-            >
+              }}>
               <LogoutIcon />
             </View>
             <Text
@@ -293,8 +269,7 @@ export default function ProfileScreen() {
                 color: '#093030',
                 marginLeft: 13,
                 textTransform: 'capitalize',
-              }}
-            >
+              }}>
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </Text>
           </TouchableOpacity>

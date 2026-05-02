@@ -1,10 +1,10 @@
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 
 const AuthLayout = () => {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ const AuthLayout = () => {
   if (isLoading) {
     return (
       <View
-        style={{ paddingTop: insets.top }}
+        style={{ paddingTop }}
         className="flex-1 items-center justify-center bg-[#00C897]/85 blur-sm">
         <Stack.Screen
           options={{

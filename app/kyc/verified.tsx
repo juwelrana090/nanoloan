@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, ActivityIndicator, Animated, Easing } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { setIsAuthenticated } from '@/shared/libs/redux/features/auth/authSlice';
 import { useLazyGetBiometricStatusQuery } from '@/shared/libs/redux/features/auth/authApi';
 import { useEffect, useState, useRef } from 'react';
@@ -165,8 +165,7 @@ const AnimatedDot = ({
 };
 
 export default function VerifiedDoneScreen() {
-  const insets = useSafeAreaInsets();
-
+  const { paddingTop, paddingBottomForModal } = useSafePadding();
   const dispatch = useAppDispatch();
   const [getBiometricStatus, { isLoading }] = useLazyGetBiometricStatusQuery();
 
@@ -271,16 +270,13 @@ export default function VerifiedDoneScreen() {
     router.replace('/(tabs)');
   };
 
-  const handleReverify = () => {
-    router.push('/kyc/started');
-  };
-
   const isVerified = verificationStatus === 'verified';
-  const accentColor = isVerified ? '#00C897' : '#EF5350';
+  // const accentColor = isVerified ? '#00C897' : '#EF5350';
+  const accentColor = '#00C897';
 
   return (
     <View
-      style={{ paddingTop: insets.top, paddingBottom: insets.bottom + 16 }}
+      style={{ paddingTop, paddingBottom: paddingBottomForModal }}
       className="flex-1 items-center justify-between bg-[#F0FFF4] px-8">
       {isLoading || verificationStatus === null ? (
         <View className="flex-1 items-center justify-center">
@@ -336,7 +332,7 @@ export default function VerifiedDoneScreen() {
               transform: [{ scale: buttonScale }],
             }}>
             <TouchableOpacity
-              onPress={isVerified ? handleDone : handleReverify}
+              onPress={handleDone}
               activeOpacity={0.85}
               style={{
                 height: 58,
@@ -354,7 +350,7 @@ export default function VerifiedDoneScreen() {
                 paddingHorizontal: 32,
               }}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                {isVerified ? (
+                {/* {isVerified ? (
                   <Path
                     d="M5 12h14M13 6l6 6-6 6"
                     stroke="white"
@@ -370,10 +366,17 @@ export default function VerifiedDoneScreen() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
-                )}
+                )} */}
+                <Path
+                  d="M5 12h14M13 6l6 6-6 6"
+                  stroke="white"
+                  strokeWidth={2.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </Svg>
               <Text style={{ fontSize: 17, fontWeight: '700', color: 'white', letterSpacing: 0.3 }}>
-                {isVerified ? 'Continue to Dashboard' : 'Re-Verification'}
+                Continue to Dashboard
               </Text>
             </TouchableOpacity>
           </Animated.View>

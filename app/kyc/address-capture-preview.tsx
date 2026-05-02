@@ -4,6 +4,7 @@ import { KycHeader, KycCard } from '@/shared/components/kyc';
 import Svg, { Path } from 'react-native-svg';
 import { Image } from 'expo-image';
 import { useState, useEffect } from 'react';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/shared/libs/redux/store';
 import {
@@ -27,6 +28,7 @@ const CheckIcon = () => (
 );
 
 export default function AddressCapturePreviewScreen() {
+  const { scrollPaddingBottom } = useSafePadding();
   const { uri } = useLocalSearchParams<{ uri?: string }>();
   const dispatch = useDispatch();
   const [verifyAddress, { isLoading: isVerifying }] = useVerifyAddressMutation();
@@ -96,7 +98,7 @@ export default function AddressCapturePreviewScreen() {
       <KycHeader title="Proof of Address" showBar currentStep={4} totalSteps={5} />
       <KycCard>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: scrollPaddingBottom }}
           showsVerticalScrollIndicator={false}>
           {/* Address preview */}
           <View className="mb-6">

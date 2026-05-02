@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
 import { Dimensions, Image, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import Animated, {
   Easing,
   FadeIn,
@@ -121,7 +121,7 @@ function PulsingRing({ delay }: { delay: number }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function SplashScreenAnimated() {
-  const insets = useSafeAreaInsets();
+  const { paddingBottom } = useSafePadding();
 
   // Logo bounce-in
   const logoScale = useSharedValue(0.3);
@@ -237,7 +237,7 @@ export default function SplashScreenAnimated() {
       </View>
 
       {/* Bottom progress bar */}
-      <Animated.View style={[styles.loaderTrack, { bottom: 80 + insets.bottom }]}>
+      <Animated.View style={[styles.loaderTrack, { bottom: 80 + paddingBottom }]}>
         <Animated.View style={[styles.loaderBar]}>
           <Animated.View style={[styles.loaderFill, loaderStyle]} />
         </Animated.View>

@@ -1,5 +1,5 @@
 import { View, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import {
   AnalysisIcon,
   CategoryIcon,
@@ -17,14 +17,17 @@ const TAB_ICONS = {
 };
 
 export const CustomTabBar = ({ state, navigation }: any) => {
-  const insets = useSafeAreaInsets();
+  const { paddingBottom } = useSafePadding();
 
   return (
     // ✅ Outer wrapper — same color as screen background to hide corner gaps
     <View className="bg-[#F0FFF4]">
       {/* ✅ Inner bar — rounded top, own background color */}
       <View
-        style={{ paddingBottom: insets.bottom + 8 }}
+        style={{
+          paddingBottom,
+          minHeight: 60
+        }}
         className="flex-row items-center justify-around rounded-tl-[70px] rounded-tr-[70px] bg-[#DFF7E2] px-6 pt-4">
         {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;

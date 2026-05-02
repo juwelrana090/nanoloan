@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 
 interface KycHeaderProps {
   title: string;
@@ -14,7 +14,7 @@ export const KycHeader = ({
   currentStep = 1,
   totalSteps = 5,
 }: KycHeaderProps) => {
-  const insets = useSafeAreaInsets();
+  const { paddingTop } = useSafePadding();
 
   const renderStepIndicator = () => {
     if (!showBar) return null;
@@ -47,7 +47,7 @@ export const KycHeader = ({
   };
 
   return (
-    <View style={{ paddingTop: insets.top }} className="items-center bg-[#00C897] px-6 pb-8">
+    <View style={{ paddingTop }} className="items-center bg-[#00C897] px-6 pb-8">
       <Text className="mt-6 text-center text-[24px] font-bold text-[#0D2B1E]">{title}</Text>
       {renderStepIndicator()}
     </View>

@@ -7,9 +7,10 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { useRef, useState, useEffect } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { router } from 'expo-router';
 import { useBiometricStatus } from '@/modules/home/hooks/useHome';
 import {
@@ -36,9 +37,10 @@ const ACCOUNTS = [
 // ── HomeScreen ───────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
+  const { paddingTop, scrollPaddingBottom } = useSafePadding();
   const [activeAccount, setActiveAccount] = useState(0);
   const [sheetVisible, setSheetVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const { biometricStatus, isLoading: bioLoading, fetchStatus } = useBiometricStatus();
 
@@ -47,6 +49,13 @@ export default function HomeScreen() {
     fetchStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchStatus();
+    setRefreshing(false);
+  };
 
   // Check if verification is needed
   const needsVerification =
@@ -217,7 +226,7 @@ export default function HomeScreen() {
       </Modal>
 
       {/* ── GREEN HEADER ─────────────────────────────────────────── */}
-      <View style={{ paddingTop: insets.top }} className="px-5 pb-5">
+      <View style={{ paddingTop }} className="px-5 pb-5">
         {/* Row 1 — Greeting + Bell */}
         <View className="mb-1 mt-3 flex-row items-start justify-between">
           <View>
@@ -234,7 +243,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Row 2 — Account + Switcher */}
-        <View className="mb-4 mt-4 flex-row items-center justify-between">
+        <View className="mb-4 mt-4 hidden flex-row items-center justify-between">
           <View>
             <Text className="text-[12px] text-[#0D2B1E]/60">Account</Text>
             <Text className="text-[16px] font-bold text-[#0D2B1E]">172*****6987</Text>
@@ -254,7 +263,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Row 3 — Total Loan | Total Due Loan */}
-        <View className="mb-5 flex-row items-start">
+        <View className="mb-5 hidden flex-row items-start">
           <View className="flex-1 pr-4">
             <View className="mb-1 flex-row items-center gap-1">
               <TotalLoanIcon color="#052224" size={12} />
@@ -273,7 +282,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Row 4 — Progress bar */}
-        <View className="flex-row items-center gap-2">
+        <View className="hidden flex-row items-center gap-2">
           <View className="h-[30px] flex-1 flex-row items-center rounded-full bg-[#0D2B1E] px-3">
             <Text className="mr-2 text-[12px] font-bold text-white">30%</Text>
             <View className="h-[5px] flex-1 rounded-full bg-white/20">
@@ -288,9 +297,18 @@ export default function HomeScreen() {
 
       {/* ── WHITE CARD ───────────────────────────────────────────── */}
       <View className="flex-1 rounded-tl-[40px] rounded-tr-[40px] bg-[#F0FFF4] px-4 pt-6">
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#00C897"
+              colors={['#00C897']}
+            />
+          }>
           {/* Loan Goals + Next Payment */}
-          <View className="mb-4 flex-row items-stretch rounded-[22px] bg-[#00C897] p-4">
+          <View className="mb-4 hidden flex-row items-stretch rounded-[22px] bg-[#00C897] p-4">
             {/* Left — Circular gauge */}
             <View className="mr-4 items-center justify-center">
               <View className="h-[82px] w-[82px] items-center justify-center rounded-full border-4 border-white/20">
@@ -361,7 +379,7 @@ export default function HomeScreen() {
             backgroundColor: 'white',
             borderTopLeftRadius: 28,
             borderTopRightRadius: 28,
-            paddingBottom: insets.bottom + 16,
+            paddingBottom: scrollPaddingBottom,
           }}>
           {/* Drag handle */}
           <View {...panResponder.panHandlers} className="items-center pb-4 pt-3">

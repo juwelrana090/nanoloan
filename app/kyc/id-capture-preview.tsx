@@ -4,6 +4,7 @@ import { KycHeader, KycCard } from '@/shared/components/kyc';
 import Svg, { Path } from 'react-native-svg';
 import { Image } from 'expo-image';
 import { useState, useEffect } from 'react';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/shared/libs/redux/store';
@@ -77,6 +78,7 @@ function maskId(id: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function IDCapturePreviewScreen() {
+  const { scrollPaddingBottom } = useSafePadding();
   const { uri, side } = useLocalSearchParams<{ uri: string; side?: 'front' | 'back' }>();
   const dispatch = useDispatch();
   const [verifyId, { isLoading: isVerifying }] = useVerifyIdMutation();
@@ -318,7 +320,7 @@ export default function IDCapturePreviewScreen() {
       />
       <KycCard>
         <ScrollView
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 24, paddingBottom: scrollPaddingBottom }}
           showsVerticalScrollIndicator={false}>
           {/* ── Progress ── */}
           <View className="mb-6 flex-row items-center justify-center">
