@@ -249,7 +249,7 @@ RELEASE_KEY_PASSWORD=YOUR_PASSWORD
 
 Ensure your `.gitignore` contains these entries:
 
-```gitignore
+```gitignoregit
 # Signing & Credentials
 *.jks
 *.keystore
