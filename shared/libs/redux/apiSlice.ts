@@ -105,6 +105,6 @@ const baseQueryWithAutoLogout = async (args: any, api: any, extraOptions: any) =
 export const apiSlice = createApi({
     reducerPath: 'api',
     baseQuery: baseQueryWithAutoLogout,
-    tagTypes: ['user'],
+    tagTypes: ['user', 'BankAccounts', 'MyLoans'],
     endpoints: () => ({})
 });

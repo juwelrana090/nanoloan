@@ -167,3 +167,103 @@ npm run prebuild
 - **Toast notifications** use `react-native-toast-message`
 - **Camera** and **gallery** permissions are configured
 - **OCR** uses ML Kit for text extraction from ID cards
+---
+
+## Bank & Loan Modules (Added 2026-05-19)
+
+### New Module Structure
+
+```
+modules/
+├── bank/
+│   └── types/
+│       └── index.ts          — BankAccount, BankTransaction interfaces
+│
+└── loan/
+    └── types/
+        └── index.ts          — LoanSummary, LoanDetail, eligibility types
+
+shared/libs/redux/features/
+├── bank/
+│   ├── bankApi.ts            — RTK Query: getAccounts, setPrimaryAccount
+│   └── bankSlice.ts          — Redux: selectedAccountId
+│
+└── loan/
+    └── loanApi.ts            — RTK Query: getMyLoans, checkEligibility, applyLoan, cancelLoan
+```
+
+### Type Definitions
+
+**BankAccount** (`modules/bank/types/index.ts`):
+```typescript
+interface BankAccount {
+  id: string;
+  accountNumber: string;
+  accountType: 'PERSONAL' | 'BUSINESS' | 'SAVINGS';
+  balance: number;
+  isPrimary: boolean;
+  // ... other fields
+}
+```
+
+**LoanSummary** (`modules/loan/types/index.ts`):
+```typescript
+interface LoanSummary {
+  id: string;
+  loanNumber: string;
+  amount: number;
+  status: LoanStatus;
+  paidAmount?: number;
+  remainingAmount?: number;
+  nextInstalmentDate?: string;
+  // ... other fields
+}
+```
+
+### RTK Query Hooks
+
+**Bank hooks** (`shared/libs/redux/features/bank/bankApi.ts`):
+```typescript
+import {
+  useGetAccountsQuery,
+  useSetPrimaryAccountMutation,
+  useGetAccountQuery,
+  useGetAccountTransactionsQuery,
+} from '@/shared/libs/redux/features/bank/bankApi';
+```
+
+**Loan hooks** (`shared/libs/redux/features/loan/loanApi.ts`):
+```typescript
+import {
+  useGetMyLoansQuery,
+  useCheckEligibilityMutation,
+  useApplyLoanMutation,
+  useCancelLoanMutation,
+} from '@/shared/libs/redux/features/loan/loanApi';
+```
+
+### Redux State Update
+
+**Store** (`shared/libs/redux/store.ts`):
+```typescript
+import bankReducer from './features/bank/bankSlice';
+
+const rootReducer = combineReducers({
+  auth: authReducer,
+  kyc: kycReducer,
+  bank: bankReducer,     // ← NEW
+  [apiSlice.reducerPath]: apiSlice.reducer,
+});
+
+const persistConfig = {
+  whitelist: ['auth', 'kyc', 'bank'], // ← 'bank' added
+};
+```
+
+**API Slice** (`shared/libs/redux/apiSlice.ts`):
+```typescript
+export const apiSlice = createApi({
+  tagTypes: ['user', 'BankAccounts', 'MyLoans'], // ← NEW tags
+});
+```
+

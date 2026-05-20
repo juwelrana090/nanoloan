@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(.context/**)",
+      "Read(.claude/**)",
+      "Read(AGENTS.md)",
+      "Read(CLAUDE.md)",
+      "Read(app/**)",
+      "Write(app/**)",
+      "Read(modules/**)",
+      "Write(modules/**)",
+      "Read(shared/**)",
+      "Write(shared/**)",
+      "Write(.context/**)",
+      "Write(.claude/tasks/**)",
+      "Write(.claude/memory/**)",
+      "Write(.claude/modules/**)",
+      "Write(.claude/skills/**)",
+      "Write(.claude/commands/**)"
+    ],
+    "deny": [
+      "Write(~/**)",
+      "Write(../**)",
+      "Read(~/.ssh/**)",
+      "Read(~/.env)",
+      "Write(android-release.keystore)",
+      "Write(android-signing.properties)",
+      "Write(google-services.json)",
+      "Write(GoogleService-Info.plist)"
+    ]
+  }
+}

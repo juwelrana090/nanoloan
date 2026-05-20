@@ -8,6 +8,7 @@ import {
   PanResponder,
   Dimensions,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useRef, useState, useEffect } from 'react';
 import { useSafePadding } from '@/shared/hooks/useSafePadding';
@@ -25,24 +26,85 @@ import {
   SyncIcon,
   ChevronRightIcon,
 } from '@/shared/components/UI/icons/svg-icons';
+import {
+  useGetAccountsQuery,
+  useSetPrimaryAccountMutation,
+} from '@/shared/libs/redux/features/bank/bankApi';
+import { useGetMyLoansQuery } from '@/shared/libs/redux/features/loan/loanApi';
+import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
+import { setSelectedAccount } from '@/shared/libs/redux/features/bank/bankSlice';
+import { useToast } from '@/shared/hooks/useToast';
+import type { BankAccount } from '@/modules/bank/types';
+import type { LoanSummary } from '@/modules/loan/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SHEET_HEIGHT = SCREEN_HEIGHT * 0.44;
-
-const ACCOUNTS = [
-  { type: 'Personal', number: '172*****6987' },
-  { type: 'Saving', number: '172*****6987' },
-];
 
 // ── HomeScreen ───────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const { paddingTop, scrollPaddingBottom } = useSafePadding();
-  const [activeAccount, setActiveAccount] = useState(0);
+  const dispatch = useAppDispatch();
+  const { showSuccess, showError } = useToast();
   const [sheetVisible, setSheetVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const { biometricStatus, isLoading: bioLoading, fetchStatus } = useBiometricStatus();
+
+  // Bank accounts data
+  const {
+    data: accountsData,
+    isLoading: accountsLoading,
+    refetch: refetchAccounts,
+  } = useGetAccountsQuery();
+
+  const [setPrimary, { isLoading: settingPrimary }] = useSetPrimaryAccountMutation();
+
+  // Loans data
+  const { data: loansData, isLoading: loansLoading, refetch: refetchLoans } = useGetMyLoansQuery();
+
+  // Derived data
+  const accounts: BankAccount[] = Array.isArray(accountsData?.data) ? accountsData.data : [];
+  const primaryAccount = accounts.find((a) => a.isPrimary) ?? accounts[0] ?? null;
+
+  const loans: LoanSummary[] = Array.isArray(loansData?.data?.loans) ? loansData.data.loans : [];
+  const activeLoans = loans.filter((l) => l.status === 'ACTIVE' || l.status === 'DISBURSED');
+
+  // Row 3 — totals
+  const totalLoan = activeLoans.reduce((sum, l) => sum + l.amount, 0);
+  const totalDueLoan = activeLoans.reduce((sum, l) => sum + (l.remainingAmount ?? 0), 0);
+
+  // Row 4 — progress
+  const totalPaid = activeLoans.reduce((sum, l) => sum + (l.paidAmount ?? 0), 0);
+  const loanGoalProgress = totalLoan > 0 ? Math.round((totalPaid / totalLoan) * 100) : 0;
+
+  // Next payment (find earliest instalment)
+  const nextPaymentLoan = activeLoans
+    .filter((l) => l.nextInstalmentDate)
+    .sort((a, b) => new Date(a.nextInstalmentDate!).getTime() - new Date(b.nextInstalmentDate!).getTime())[0];
+  const nextPaymentAmount = nextPaymentLoan?.nextInstalmentAmount ?? nextPaymentLoan?.emi ?? 0;
+  const nextPaymentDate = nextPaymentLoan?.nextInstalmentDate ?? null;
+
+  // Helpers
+  const maskAccountNumber = (num: string): string =>
+    num.length >= 7 ? `${num.slice(0, 3)}*****${num.slice(-4)}` : num;
+
+  const formatTaka = (amount: number): string =>
+    `৳${amount.toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const formatDate = (dateStr: string): string => {
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    const suffix =
+      day === 1 || day === 21 || day === 31
+        ? 'st'
+        : day === 2 || day === 22
+          ? 'nd'
+          : day === 3 || day === 23
+            ? 'rd'
+            : 'th';
+    return `${day}${suffix} ${d.toLocaleString('en-US', { month: 'long' })} ${d.getFullYear()}`;
+  };
 
   // Fetch biometric status on mount
   useEffect(() => {
@@ -53,8 +115,22 @@ export default function HomeScreen() {
   // Handle pull-to-refresh
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchStatus();
+    await Promise.all([fetchStatus(), refetchAccounts(), refetchLoans()]);
     setRefreshing(false);
+  };
+
+  // Handle account switch
+  const handleSwitchAccount = async (accountId: string) => {
+    try {
+      await setPrimary(accountId).unwrap();
+      dispatch(setSelectedAccount(accountId));
+      showSuccess({ title: 'Account Switched', message: 'Primary account updated' });
+      closeSheet();
+      refetchAccounts();
+    } catch (err: unknown) {
+      const error = err as { status?: number; data?: { message?: string } };
+      showError({ title: 'Error', message: error?.data?.message ?? 'Failed to switch account' });
+    }
   };
 
   // Check if verification is needed
@@ -121,6 +197,8 @@ export default function HomeScreen() {
   ).current;
 
   console.log('biometricStatus', biometricStatus);
+  console.log('accountsData', accountsData);
+  console.log('loansData', loansData);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#00C897' }}>
@@ -243,10 +321,12 @@ export default function HomeScreen() {
         </View>
 
         {/* Row 2 — Account + Switcher */}
-        <View className="mb-4 mt-4 hidden flex-row items-center justify-between">
+        <View className="mb-4 mt-4 flex-row items-center justify-between">
           <View>
             <Text className="text-[12px] text-[#0D2B1E]/60">Account</Text>
-            <Text className="text-[16px] font-bold text-[#0D2B1E]">172*****6987</Text>
+            <Text className="text-[16px] font-bold text-[#0D2B1E]">
+              {primaryAccount ? maskAccountNumber(primaryAccount.accountNumber) : '---'}
+            </Text>
           </View>
           <TouchableOpacity
             onPress={openSheet}
@@ -256,20 +336,24 @@ export default function HomeScreen() {
               <RoundBDTIcon color="#FFFFFF" size={38} />
             </View>
             <View className="h-6 w-[1px] bg-white/40" />
-            <View className="h-[38px] w-[38px] items-center justify-center">
-              <BankAccountIcon color="#FFFFFF" size={38} />
-            </View>
+            <TouchableOpacity onPress={() => router.push('/bank/accounts' as any)}>
+              <View className="h-[38px] w-[38px] items-center justify-center">
+                <BankAccountIcon color="#FFFFFF" size={38} />
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
         </View>
 
         {/* Row 3 — Total Loan | Total Due Loan */}
-        <View className="mb-5 hidden flex-row items-start">
+        <View className="mb-5 flex-row items-start">
           <View className="flex-1 pr-4">
             <View className="mb-1 flex-row items-center gap-1">
               <TotalLoanIcon color="#052224" size={12} />
               <Text className="text-[12px] text-[#0D2B1E]/70">Total Loan</Text>
             </View>
-            <Text className="text-[26px] font-extrabold leading-8 text-[#0D2B1E]">৳7,783.00</Text>
+            <Text className="text-[26px] font-extrabold leading-8 text-[#0D2B1E]">
+              {formatTaka(totalLoan)}
+            </Text>
           </View>
           <View className="w-[1px] self-stretch bg-[#0D2B1E]/20" />
           <View className="flex-1 pl-4">
@@ -277,20 +361,25 @@ export default function HomeScreen() {
               <TotalDueLoanIcon color="#052224" size={12} />
               <Text className="text-[12px] text-[#0D2B1E]/70">Total Due Loan</Text>
             </View>
-            <Text className="text-[26px] font-extrabold leading-8 text-red-400">-৳1,187.40</Text>
+            <Text className="text-[26px] font-extrabold leading-8 text-red-400">
+              -{formatTaka(totalDueLoan)}
+            </Text>
           </View>
         </View>
 
         {/* Row 4 — Progress bar */}
-        <View className="hidden flex-row items-center gap-2">
+        <View className="flex-row items-center gap-2">
           <View className="h-[30px] flex-1 flex-row items-center rounded-full bg-[#0D2B1E] px-3">
-            <Text className="mr-2 text-[12px] font-bold text-white">30%</Text>
+            <Text className="mr-2 text-[12px] font-bold text-white">{loanGoalProgress}%</Text>
             <View className="h-[5px] flex-1 rounded-full bg-white/20">
-              <View className="h-full w-[30%] rounded-full bg-white" />
+              <View
+                className="h-full rounded-full bg-white"
+                style={{ width: `${loanGoalProgress}%` }}
+              />
             </View>
           </View>
           <View className="h-[30px] items-center justify-center rounded-full border border-[#0D2B1E]/25 px-3">
-            <Text className="text-[12px] font-semibold text-[#0D2B1E]">৳ 20,000.00</Text>
+            <Text className="text-[12px] font-semibold text-[#0D2B1E]">{formatTaka(totalLoan)}</Text>
           </View>
         </View>
       </View>
@@ -308,45 +397,51 @@ export default function HomeScreen() {
             />
           }>
           {/* Loan Goals + Next Payment */}
-          <View className="mb-4 hidden flex-row items-stretch rounded-[22px] bg-[#00C897] p-4">
-            {/* Left — Circular gauge */}
-            <View className="mr-4 items-center justify-center">
-              <View className="h-[82px] w-[82px] items-center justify-center rounded-full border-4 border-white/20">
-                <View
-                  className="h-[66px] w-[66px] items-center justify-center rounded-full"
-                  style={{
-                    borderWidth: 4,
-                    borderTopColor: 'rgba(255,255,255,0.15)',
-                    borderRightColor: 'rgba(255,255,255,0.15)',
-                    borderBottomColor: '#5B8DEF',
-                    borderLeftColor: '#5B8DEF',
-                    transform: [{ rotate: '45deg' }],
-                  }}>
-                  <View style={{ transform: [{ rotate: '-45deg' }] }}>
-                    <BDTSymbolIcon color="white" size={20} />
+          {nextPaymentDate !== null && (
+            <View className="mb-4 flex-row items-stretch rounded-[22px] bg-[#00C897] p-4">
+              {/* Left — Circular gauge */}
+              <View className="mr-4 items-center justify-center">
+                <View className="h-[82px] w-[82px] items-center justify-center rounded-full border-4 border-white/20">
+                  <View
+                    className="h-[66px] w-[66px] items-center justify-center rounded-full"
+                    style={{
+                      borderWidth: 4,
+                      borderTopColor: 'rgba(255,255,255,0.15)',
+                      borderRightColor: 'rgba(255,255,255,0.15)',
+                      borderBottomColor: '#5B8DEF',
+                      borderLeftColor: '#5B8DEF',
+                      transform: [{ rotate: '45deg' }],
+                    }}>
+                    <View style={{ transform: [{ rotate: '-45deg' }] }}>
+                      <BDTSymbolIcon color="white" size={20} />
+                    </View>
                   </View>
                 </View>
+                <Text className="mt-2 text-[12px] font-semibold text-white">Loan Goals</Text>
               </View>
-              <Text className="mt-2 text-[12px] font-semibold text-white">Loan Goals</Text>
-            </View>
 
-            {/* Divider */}
-            <View className="mx-2 w-[1px] self-stretch bg-white/25" />
+              {/* Divider */}
+              <View className="mx-2 w-[1px] self-stretch bg-white/25" />
 
-            {/* Right — Next Payment */}
-            <View className="flex-1 justify-center pl-2">
-              <View className="mb-2 flex-row items-center gap-2">
-                <NextLoanIcon size={24} />
-                <Text className="text-[12px] text-white/80">Next Loan Payment</Text>
-              </View>
-              <Text className="mb-3 text-[22px] font-extrabold text-white">৳4,000.00</Text>
-              <View className="mb-3 h-[1px] w-full bg-white/20" />
-              <View className="flex-row items-center gap-2">
-                <DateIcon size={22} />
-                <Text className="text-[13px] font-semibold text-white">7th December 2026</Text>
+              {/* Right — Next Payment */}
+              <View className="flex-1 justify-center pl-2">
+                <View className="mb-2 flex-row items-center gap-2">
+                  <NextLoanIcon size={24} />
+                  <Text className="text-[12px] text-white/80">Next Loan Payment</Text>
+                </View>
+                <Text className="mb-3 text-[22px] font-extrabold text-white">
+                  {formatTaka(nextPaymentAmount)}
+                </Text>
+                <View className="mb-3 h-[1px] w-full bg-white/20" />
+                <View className="flex-row items-center gap-2">
+                  <DateIcon size={22} />
+                  <Text className="text-[13px] font-semibold text-white">
+                    {formatDate(nextPaymentDate)}
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
+          )}
 
           {/* Make a loan */}
           <View className="rounded-[22px] bg-[#00C897] p-5">
@@ -356,8 +451,15 @@ export default function HomeScreen() {
             </Text>
             <TouchableOpacity
               activeOpacity={0.8}
+              onPress={() => router.push('/loans/check-eligibility' as any)}
               className="h-[36px] items-center justify-center self-start rounded-full bg-white px-5">
               <Text className="text-[13px] font-semibold text-[#1A1A1A]">Create Application</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/loans/my-loans' as any)}
+              className="mt-2 h-[36px] items-center justify-center self-start rounded-full border border-[#0D2B1E]/40 px-5">
+              <Text className="text-[13px] font-semibold text-[#0D2B1E]">View My Loans</Text>
             </TouchableOpacity>
           </View>
 
@@ -390,35 +492,47 @@ export default function HomeScreen() {
             <Text className="mb-4 text-[18px] font-bold text-[#1A1A1A]">My Accounts</Text>
 
             {/* Sync row */}
-            <View className="mb-4 h-[46px] flex-row items-center gap-2 rounded-xl bg-[#F5F5F5] px-4">
+            <TouchableOpacity
+              onPress={() => refetchAccounts()}
+              className="mb-4 h-[46px] flex-row items-center gap-2 rounded-xl bg-[#F5F5F5] px-4">
               <SyncIcon color="#00C897" size={17} />
               <Text className="flex-1 text-[13px] text-[#555]">
                 Tap to see recent added accounts
               </Text>
-              <TouchableOpacity activeOpacity={0.7}>
+              {accountsLoading ? (
+                <ActivityIndicator size="small" color="#00C897" />
+              ) : (
                 <Text className="text-[13px] font-bold text-[#00C897]">Sync</Text>
-              </TouchableOpacity>
-            </View>
+              )}
+            </TouchableOpacity>
 
             {/* Account list */}
-            {ACCOUNTS.map((acc, i) => (
-              <TouchableOpacity
-                key={i}
-                onPress={() => {
-                  setActiveAccount(i);
-                  closeSheet();
-                }}
-                activeOpacity={0.8}
-                className={`mb-3 h-[64px] flex-row items-center justify-between rounded-2xl px-4 ${
-                  activeAccount === i ? 'border border-[#00C897] bg-[#E4F7EE]' : 'bg-[#F9F9F9]'
-                }`}>
-                <View>
-                  <Text className="text-[15px] font-bold text-[#1A1A1A]">{acc.type}</Text>
-                  <Text className="text-[13px] text-[#888]">{acc.number}</Text>
-                </View>
-                <ChevronRightIcon color={activeAccount === i ? '#00C897' : '#CCC'} size={18} />
-              </TouchableOpacity>
-            ))}
+            {accountsLoading ? (
+              <>
+                <View className="mb-3 h-[64px] rounded-2xl bg-[#F0F0F0]" />
+                <View className="mb-3 h-[64px] rounded-2xl bg-[#F0F0F0]" />
+              </>
+            ) : (
+              accounts.map((acc) => (
+                <TouchableOpacity
+                  key={acc.id}
+                  onPress={() => handleSwitchAccount(acc.id)}
+                  activeOpacity={0.8}
+                  disabled={settingPrimary}
+                  className={`mb-3 h-[64px] flex-row items-center justify-between rounded-2xl px-4 ${
+                    acc.isPrimary ? 'border border-[#00C897] bg-[#E4F7EE]' : 'bg-[#F9F9F9]'
+                  }`}>
+                  <View>
+                    <Text className="text-[15px] font-bold text-[#1A1A1A]">
+                      {acc.accountType.charAt(0) + acc.accountType.slice(1).toLowerCase()}
+                    </Text>
+                    <Text className="text-[13px] text-[#888]">{maskAccountNumber(acc.accountNumber)}</Text>
+                    <Text className="text-[12px] font-semibold text-[#00C897]">{formatTaka(acc.balance)}</Text>
+                  </View>
+                  <ChevronRightIcon color={acc.isPrimary ? '#00C897' : '#CCC'} size={18} />
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </Animated.View>
       </Modal>

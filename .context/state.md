@@ -423,3 +423,81 @@ interface KYCState {
 ```
 
 This will be added in Task 03.
+---
+
+## Bank State (Added 2026-05-19)
+
+**Location**: `shared/libs/redux/features/bank/bankSlice.ts`
+
+### State Shape
+
+```typescript
+interface BankState {
+  selectedAccountId: string | null;
+}
+```
+
+### State Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `selectedAccountId` | `string \| null` | ID of the selected bank account for loan applications |
+
+### Actions
+
+```typescript
+import { setSelectedAccount, clearSelectedAccount } from '@/shared/libs/redux/features/bank/bankSlice';
+
+// Set selected account
+dispatch(setSelectedAccount(accountId));
+
+// Clear selected account
+dispatch(clearSelectedAccount());
+```
+
+### Selectors
+
+```typescript
+import { useAppSelector } from '@/shared/hooks/useAppSelector';
+
+const selectedAccountId = useAppSelector((state) => state.bank.selectedAccountId);
+```
+
+### Persistence
+
+The `bank` slice is persisted to AsyncStorage via the whitelist in `store.ts`:
+
+```typescript
+const persistConfig = {
+  key: 'root',
+  storage: AsyncStorage,
+  whitelist: ['auth', 'kyc', 'bank'], // ← 'bank' added
+};
+```
+
+This means `selectedAccountId` survives app restarts.
+
+### Usage Pattern
+
+When a user selects an account for a loan application:
+
+```typescript
+// In loan application flow
+const dispatch = useAppDispatch();
+const accountId = primaryAccount?.id;
+
+// Store selection for later use
+dispatch(setSelectedAccount(accountId));
+
+// Later, when submitting loan application
+const selectedAccountId = useAppSelector((state) => state.bank.selectedAccountId);
+const [applyLoan] = useApplyLoanMutation();
+
+await applyLoan({
+  amount,
+  tenure,
+  purpose,
+  bankAccountId: selectedAccountId!, // Use stored selection
+});
+```
+

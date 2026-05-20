@@ -641,3 +641,164 @@ AddressCapturePreviewScreen
   └─→ 201 Created { success, message, data: { id, status } }
      └─→ Navigate to FacialRecognitionScreen
 ```
+---
+
+## Bank & Loan Endpoints (Added 2026-05-19)
+
+### GET /v1/bank/accounts
+
+List all bank accounts for the authenticated customer.
+
+**Request**: None (authenticated)
+
+**Response**:
+```typescript
+{
+  success: true,
+  message: string,
+  data: BankAccount[]
+}
+
+interface BankAccount {
+  id: string;
+  customerId: string;
+  accountNumber: string;        // 17 digits starting with 172
+  accountType: 'PERSONAL' | 'BUSINESS' | 'SAVINGS';
+  accountName: string;
+  bankName: string;             // "Nano Bank"
+  branchName: string;
+  routingNumber: string;
+  balance: number;              // BDT amount
+  status: 'ACTIVE' | 'INACTIVE' | 'FROZEN';
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+**Usage in HomeScreen**:
+```typescript
+const { data: accountsData, isLoading } = useGetAccountsQuery();
+const accounts = accountsData?.data ?? [];
+const primaryAccount = accounts.find((a) => a.isPrimary) ?? accounts[0];
+```
+
+---
+
+### POST /v1/bank/accounts/:id/primary
+
+Set a specific account as the primary account.
+
+**Request**: None (body empty)
+
+**Response**:
+```typescript
+{
+  success: true,
+  message: "Primary account updated",
+  data: BankAccount
+}
+```
+
+**Usage in HomeScreen account switcher**:
+```typescript
+const [setPrimary] = useSetPrimaryAccountMutation();
+
+const handleSwitchAccount = async (accountId: string) => {
+  try {
+    await setPrimary(accountId).unwrap();
+    showSuccess({ title: 'Account Switched', message: 'Primary account updated' });
+  } catch (err) {
+    showError({ title: 'Error', message: 'Failed to switch account' });
+  }
+};
+```
+
+---
+
+### GET /v1/loans/my
+
+Get all loans for the authenticated customer.
+
+**Query Params**:
+- `page?: number` — Page number (default: 1)
+- `limit?: number` — Items per page (default: 20)
+- `status?: LoanStatus` — Filter by status
+
+**Response**:
+```typescript
+{
+  success: true,
+  message: string,
+  data: {
+    loans: LoanSummary[],
+    total: number
+  }
+}
+
+interface LoanSummary {
+  id: string;
+  loanNumber: string;           // e.g., "LN-2026-00001"
+  amount: number;               // Loan amount in BDT
+  tenure: number;               // Tenure in months
+  emi: number;                  // Monthly instalment amount
+  status: LoanStatus;
+  paidAmount?: number;
+  remainingAmount?: number;
+  nextInstalmentDate?: string;  // ISO date string
+  nextInstalmentAmount?: number;
+  createdAt: string;
+}
+
+type LoanStatus =
+  | 'PENDING'
+  | 'UNDER_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'DISBURSED'
+  | 'ACTIVE'
+  | 'CLOSED'
+  | 'CANCELLED';
+```
+
+**Usage in HomeScreen**:
+```typescript
+const { data: loansData } = useGetMyLoansQuery();
+const loans = loansData?.data?.loans ?? [];
+const activeLoans = loans.filter((l) => l.status === 'ACTIVE' || l.status === 'DISBURSED');
+
+// Calculate totals
+const totalLoan = activeLoans.reduce((sum, l) => sum + l.amount, 0);
+const totalDueLoan = activeLoans.reduce((sum, l) => sum + (l.remainingAmount ?? 0), 0);
+
+// Find next payment
+const nextPaymentLoan = activeLoans
+  .filter((l) => l.nextInstalmentDate)
+  .sort((a, b) => new Date(a.nextInstalmentDate!).getTime() - new Date(b.nextInstalmentDate!).getTime())[0];
+```
+
+---
+
+### Tag-Based Cache Invalidation
+
+The bank and loan endpoints use RTK Query tags:
+
+**Tags**:
+- `'BankAccounts'` — Bank account list
+- `'MyLoans'` — Loan list
+
+**Provides**:
+- `getAccounts` → `['BankAccounts']`
+- `getAccount(id)` → `[{ type: 'BankAccounts', id }]`
+- `getMyLoans` → `['MyLoans']`
+
+**Invalidates**:
+- `setPrimaryAccount` → `['BankAccounts']`
+- `applyLoan` → `['MyLoans']`
+- `cancelLoan` → `['MyLoans', { type: 'MyLoans', id }]`
+
+This ensures that:
+- Setting a new primary account refreshes the account list
+- Applying for a loan refreshes the loan list
+- Canceling a loan refreshes that specific loan
+

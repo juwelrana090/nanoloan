@@ -3,7 +3,15 @@
     "allow": [
       "mcp__claude_ai_Figma__get_design_context",
       "mcp__claude_ai_Figma__search_design_system",
-      "Bash(npx react-native *)"
+      "Bash(npx react-native *)",
+      "Bash(curl -s \"https://backend-nanoloan.giize.com/api-json\")",
+      "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\TASK_COMPLETION_SUMMARY.md' -Value \\(Get-Content 'TASK_COMPLETION_SUMMARY_append.md' -Raw\\)\")",
+      "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\state.md' -Value \\(Get-Content 'state_md_append.md' -Raw\\)\")",
+      "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\api-contracts-task03.md' -Value \\(Get-Content 'api-contracts_append.md' -Raw\\)\")",
+      "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\project-overview.md' -Value \\(Get-Content 'project-overview_append.md' -Raw\\)\")",
+      "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\TASK_COMPLETION_SUMMARY.md' -Value \\(Get-Content '.\\\\.context\\\\TASK_COMPLETION_SUMMARY_append.md' -Raw\\)\")",
+      "Bash(powershell -Command \"Get-Content '.\\\\.context\\\\TASK_COMPLETION_SUMMARY.md' -Tail 5\")"
     ]
-  }
+  },
+  "developerName": "Dalawer Hossain Juwel"
 }
