@@ -95,7 +95,7 @@ export default function CheckEligibilityScreen() {
         {/* No account selected warning */}
         {!selectedAccountId && (
           <View className="m-5 rounded-2xl bg-[#FFF8E1] border border-[#FF9800] p-4">
-            <Text className="mb-1 text-[14px] font-bold text-[#FF9800]}>⚠️ No Bank Account Selected</Text>
+            <Text className="mb-1 text-[14px] font-bold text-[#FF9800]">⚠️ No Bank Account Selected</Text>
             <Text className="text-[13px] text-[#666]">
               Please select a bank account before applying for a loan.
             </Text>
