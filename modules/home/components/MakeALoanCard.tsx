@@ -4,59 +4,30 @@ import { router } from 'expo-router';
 
 export const MakeALoanCard: React.FC = () => {
   return (
-    <View
-      style={{
-        height: 111,
-        paddingHorizontal: 16.53,
-        paddingTop: 17,
-        paddingBottom: 17,
-        backgroundColor: '#00D09E',
-        borderRadius: 30,
-      }}>
-      {/* Title - Figma: x:16.53, y:17 (from padding), height:24px */}
-      {/* Description starts at y:40, so margin-bottom = 40 - (17 + 24) = -1 */}
+    <View className="h-[111px] w-full rounded-[30px] bg-[#00D09E] px-[17px] py-[17px]">
+      {/* Title - Arial Bold 18px, color #052224, line-height 24px */}
       <Text
-        className="text-[18px] font-bold leading-[24px]"
-        style={{
-          fontFamily: 'Arial',
-          color: '#052224',
-          marginBottom: -1,
-        }}>
+        className="mb-[-1px] text-[18px] font-bold leading-[24px] text-[#052224]"
+        style={{ fontFamily: 'Arial' }}>
         Make a loan
       </Text>
 
-      {/* Description - Figma: x:16.53, y:40 (from padding), height:24px */}
-      {/* Button starts at y:68, so margin-bottom = 68 - (40 + 24) = 4 */}
+      {/* Description - Arial Regular 12px, color #052224, line-height 24px */}
       <Text
-        className="text-[10px] font-normal leading-[24px]"
-        style={{
-          fontFamily: 'Arial',
-          color: '#052224',
-          marginBottom: 4,
-        }}>
+        className="mb-[4px] text-[12px] font-normal leading-[24px] text-[#052224]"
+        style={{ fontFamily: 'Arial' }}>
         we are ready to help you for your awesome work. let&apos;s invest there.
       </Text>
 
-      {/* Create Application Button - Figma: y:68, size:159.77×25px */}
+      {/* Create Application Button - 159.77×25px, white bg, radius 30px */}
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => router.push('/loans/check-eligibility' as any)}
-        style={{
-          width: 159.77,
-          height: 25,
-          backgroundColor: '#FFFFFF',
-          borderRadius: 30,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        {/* Button Text - Figma: x:28.65 (from button left), y:1 (from button top) */}
+        className="h-[25px] w-[159.77px] items-center justify-center rounded-[30px] bg-white">
+        {/* Button Text - Arial Bold 12px, color #0E3E3E, line-height 24px, margin-top 1 */}
         <Text
-          className="text-[10px] font-bold leading-[24px]"
-          style={{
-            fontFamily: 'Arial',
-            color: '#0E3E3E',
-            marginTop: 1,
-          }}>
+          className="mt-[1px] text-[12px] font-bold leading-[24px] text-[#0E3E3E]"
+          style={{ fontFamily: 'Arial' }}>
           Create Application
         </Text>
       </TouchableOpacity>
