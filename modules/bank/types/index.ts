@@ -36,3 +36,7 @@ export interface AccountWithTransactions {
   account: BankAccount;
   transactions: BankTransaction[];
 }
+
+export interface AccountsListResponse {
+  accounts: BankAccount[];
+}

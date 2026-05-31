@@ -10,7 +10,12 @@
       "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\api-contracts-task03.md' -Value \\(Get-Content 'api-contracts_append.md' -Raw\\)\")",
       "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\project-overview.md' -Value \\(Get-Content 'project-overview_append.md' -Raw\\)\")",
       "Bash(powershell -Command \"Add-Content -Path '.\\\\.context\\\\TASK_COMPLETION_SUMMARY.md' -Value \\(Get-Content '.\\\\.context\\\\TASK_COMPLETION_SUMMARY_append.md' -Raw\\)\")",
-      "Bash(powershell -Command \"Get-Content '.\\\\.context\\\\TASK_COMPLETION_SUMMARY.md' -Tail 5\")"
+      "Bash(powershell -Command \"Get-Content '.\\\\.context\\\\TASK_COMPLETION_SUMMARY.md' -Tail 5\")",
+      "mcp__filesystem__list_directory",
+      "Bash(Remove-Item -Path \"c:\\\\Dev\\\\Miguns\\\\nanoloan\\\\app\\\\bank\" -Recurse -Force)",
+      "Bash(npx tsc *)",
+      "Bash(npx expo *)",
+      "mcp__figma__get_figma_data"
     ]
   },
   "developerName": "Dalawer Hossain Juwel"

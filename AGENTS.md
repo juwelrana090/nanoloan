@@ -5,6 +5,63 @@
 
 ---
 
+## 🔴 MANDATORY WORKFLOW — READ FIRST
+
+### 📋 PRE-TASK PROTOCOL (MANDATORY — DO BEFORE ANY WORK)
+
+**EVERY AI Agent MUST complete this checklist BEFORE writing code:**
+
+```
+□ 1. Read .context/AGENT_README.md
+□ 2. Read .context/TASK_COMPLETION_SUMMARY.md  ← Understand what's already done
+□ 3. Read .context/project-overview.md         ← Understand project structure
+□ 4. Read .context/state.md                    ← Understand Redux state
+□ 5. Read task-specific .context/ files:
+     - api.md for API work
+     - screens-kyc.md for KYC screens
+     - api-contracts-task03.md for endpoint contracts
+□ 6. Fetch live API spec BEFORE any API work:
+     GET https://backend-nanoloan.giize.com/api-json
+□ 7. Read EVERY source file you plan to modify
+     ← NEVER assume file contents
+```
+
+**NO EXCEPTIONS. NO SHORTCUTS.**
+
+---
+
+### ✅ POST-TASK PROTOCOL (MANDATORY — DO AFTER EVERY TASK)
+
+**EVERY AI Agent MUST update .context/ AFTER completing work:**
+
+```
+□ 1. .context/TASK_COMPLETION_SUMMARY.md
+     - Add NEW dated entry (never append to existing)
+     - List: What implemented, files created, files modified
+     - Include: Known issues, next steps, what's pending
+
+□ 2. .context/state.md
+     - IF Redux slice created/changed: update state shapes
+     - IF new action added: document signature
+     - IF persist changed: update whitelist
+
+□ 3. .context/api-contracts-task03.md
+     - IF new endpoint wired: add request/response interfaces
+     - Include: RTK hook name, usage example
+
+□ 4. .context/project-overview.md
+     - IF new file/folder created: update folder structure
+     - IF new module added: document exports
+     - IF dependencies changed: update tech stack
+
+□ 5. TypeScript check: npx tsc --noEmit
+     - MUST pass with zero errors before calling task done
+```
+
+**TASK IS NOT COMPLETE UNTIL .context/ IS UPDATED.**
+
+---
+
 ## 🗂️ What Is This Project?
 
 **NanoLoan** is a React Native (Expo) mobile fintech app for micro-lending services built by Miguns Technology Ltd, Dhaka, Bangladesh. Users register, complete KYC verification, and apply for loans against a linked bank account.

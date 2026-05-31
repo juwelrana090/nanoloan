@@ -179,6 +179,21 @@ modules/
 │   └── types/
 │       └── index.ts          — BankAccount, BankTransaction interfaces
 │
+├── home/
+│   ├── components/
+│   │   ├── VerificationModal.tsx     — Verification required modal
+│   │   ├── GreenHeader.tsx          — Green header section
+│   │   ├── LoanGoalsCard.tsx        — Loan goals circular gauge
+│   │   ├── MakeALoanCard.tsx        — "Make a loan" CTA section
+│   │   ├── AccountSwitchSheet.tsx   — Account switcher bottom sheet
+│   │   └── index.ts                 — Component exports
+│   ├── hooks/
+│   │   └── useHome.ts               — useBiometricStatus hook
+│   ├── services/
+│   │   └── homeService.ts           — Home-related API calls
+│   └── types/
+│       └── index.ts                 — Home-related types
+│
 └── loan/
     └── types/
         └── index.ts          — LoanSummary, LoanDetail, eligibility types

@@ -53,7 +53,11 @@ export const biometricApi = apiSlice.injectEndpoints({
       }),
     }),
   }),
-});
+},
+{
+  overrideExisting: true,
+}
+);
 
 export const {
   useStartVerificationMutation,

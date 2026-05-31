@@ -172,7 +172,11 @@ export const authApi = apiSlice.injectEndpoints({
       providesTags: ['user'],
     }),
   }),
-});
+},
+{
+  overrideExisting: true,
+}
+);
 
 export const {
   useRegisterMutation,

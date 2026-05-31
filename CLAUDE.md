@@ -8,6 +8,55 @@
 
 ---
 
+## 🔴 MANDATORY PRE-TASK PROTOCOL
+
+**Claude MUST complete this checklist BEFORE any code work:**
+
+```
+□ 1. Read AGENTS.md (full file)
+□ 2. Read CLAUDE.md (this file)
+□ 3. Read .context/TASK_COMPLETION_SUMMARY.md  ← Most important!
+□ 4. Read .context/project-overview.md
+□ 5. Read .context/state.md
+□ 6. Read task-specific .context/ files
+□ 7. Fetch live API spec: GET https://backend-nanoloan.giize.com/api-json
+     (for any task touching endpoints)
+□ 8. Read the actual source files to be modified
+□ 9. Only then start coding
+```
+
+**NO EXCEPTIONS. Claude reads before it writes.**
+
+---
+
+## 🔴 MANDATORY POST-TASK PROTOCOL
+
+**After EVERY task, Claude MUST update .context/ folder:**
+
+```
+□ 1. Update .context/TASK_COMPLETION_SUMMARY.md
+     - Add dated entry with: implementation, files created/modified
+     - Include: issues, next steps, pending items
+
+□ 2. Update .context/state.md
+     - IF Redux slice changed: document new state shape/actions
+
+□ 3. Update .context/api-contracts-task03.md
+     - IF new API endpoint wired: add contracts
+
+□ 4. Update .context/project-overview.md
+     - IF new files/folders: update structure section
+
+□ 5. Run TypeScript check: npx tsc --noEmit
+     - Must pass zero errors
+
+□ 6. Report completion with .context/ update summary
+```
+
+**TASK IS NOT COMPLETE UNTIL .context/ IS UPDATED.**
+
+---
+
 ## 🔄 .context/ Update — Claude's Responsibility
 
 After every task — no matter how small — Claude must update the `.context/` folder.
