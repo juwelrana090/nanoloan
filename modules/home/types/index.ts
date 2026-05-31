@@ -125,10 +125,10 @@ export interface LoanSummary {
   loanGoalAmount: number;
   loanGoalProgress: number; // 0-100
   loanLimit: number;
-  accounts: Array<{
+  accounts: {
     type: string;
     number: string;
-  }>;
+  }[];
 }
 
 export type GetLoanSummaryResponse = ApiSuccessResponse<LoanSummary>;

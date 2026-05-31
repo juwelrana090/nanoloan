@@ -1,5 +1,4 @@
-import React from 'react';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { Modal, TouchableOpacity, View, Text, Animated, PanResponder, ActivityIndicator, DimensionValue } from 'react-native';
 import { ChevronRightIcon, SyncIcon } from '@/shared/components/UI/icons/svg-icons';
 import type { BankAccount } from '@/modules/bank/types';

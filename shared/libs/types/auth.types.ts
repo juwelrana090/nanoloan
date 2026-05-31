@@ -266,7 +266,7 @@ export interface BiometricStatusResponse {
   confidenceScore?: number;
   createdAt: string;
   updatedAt: string;
-  logs?: Array<{
+  logs?: {
     id: string;
     userId: string;
     verificationType: 'ID' | 'ADDRESS' | 'FACE';
@@ -275,5 +275,5 @@ export interface BiometricStatusResponse {
     confidence?: number;
     notes: string;
     createdAt: string;
-  }>;
+  }[];
 }

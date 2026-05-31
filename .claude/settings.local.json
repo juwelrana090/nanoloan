@@ -15,7 +15,8 @@
       "Bash(Remove-Item -Path \"c:\\\\Dev\\\\Miguns\\\\nanoloan\\\\app\\\\bank\" -Recurse -Force)",
       "Bash(npx tsc *)",
       "Bash(npx expo *)",
-      "mcp__figma__get_figma_data"
+      "mcp__figma__get_figma_data",
+      "mcp__filesystem__create_directory"
     ]
   },
   "developerName": "Dalawer Hossain Juwel"
