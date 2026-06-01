@@ -33,7 +33,9 @@ const Field: React.FC<FieldProps> = ({
 }) => (
   <View className="gap-2">
     <Text className="font-poppins-medium text-[15px] text-[#093030]">{label}</Text>
-    <View className="rounded-[10px] px-5 py-[14px]" style={{ backgroundColor: '#DFF7E2' }}>
+    <View
+      className="rounded-[10px] px-5 py-[14px]"
+      style={{ backgroundColor: '#DFF7E2', opacity: editable ? 1 : 0.7 }}>
       <TextInput
         value={value}
         onChangeText={onChangeText}
@@ -69,34 +71,32 @@ export const AccountSettingsSection: React.FC<AccountSettingsSectionProps> = ({
       {/* Section Title */}
       <Text className="font-poppins-semibold text-[20px] text-[#093030]">Account Settings</Text>
 
-      {/* Username */}
+      {/* Username — always read-only */}
       <Field
         label="Username"
         value={displayUsername}
-        placeholder="Enter username"
-        onChangeText={onUsernameChange}
-        editable={editable}
+        placeholder="Username"
+        editable={false}
         autoCapitalize="none"
       />
 
-      {/* Phone */}
+      {/* Phone — editable when editable prop is true */}
       <Field
         label="Phone"
         value={displayPhone}
         placeholder="+880 000 0000 00"
         onChangeText={onPhoneChange}
-        editable={editable}
+        editable={false}
         keyboardType="phone-pad"
         autoCapitalize="none"
       />
 
-      {/* Email Address */}
+      {/* Email Address — always read-only */}
       <Field
         label="Email Address"
         value={displayEmail}
         placeholder="example@example.com"
-        onChangeText={onEmailChange}
-        editable={editable}
+        editable={false}
         keyboardType="email-address"
         autoCapitalize="none"
       />

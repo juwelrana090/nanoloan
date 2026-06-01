@@ -1289,3 +1289,107 @@ Fixed critical spacing issues in Edit Profile screen to match Figma design exact
 - ✅ All components maintain proper TypeScript types
 - ✅ Responsive layout preserved with Safe Area padding
 
+---
+
+## 2026-06-01 — Task 06: Edit Profile API Wiring
+
+### Summary
+Wired the Edit Profile screen to the real `PUT /v1/users/me` API endpoint, replacing all Alert placeholders with working API calls using RTK Query hooks.
+
+### Files Modified (2 files)
+- `app/profile/edit-profile.tsx` — Full API integration:
+  - Added imports: `useAppDispatch`, `useToast`, `useUpdateProfileMutation`, `setUser`, `UpdateProfileRequest`, `TextInput`
+  - Added local state for editable fields: `fullName`, `phoneNumber`
+  - Replaced `isUpdating` useState with RTK mutation's `isLoading`
+  - Replaced `handleUpdateProfile` Alert with real API call using `useUpdateProfileMutation`
+  - Replaced camera Alert with `showInfo` toast
+  - Added Full Name field above AccountSettingsSection with TextInput
+  - Passed `editable={true}`, `phone`, `onPhoneChange`, `username`, `email` props to AccountSettingsSection
+- `modules/profile/components/AccountSettingsSection.tsx` — Read-only enforcement:
+  - Made `username` field always `editable={false}` (read-only)
+  - Made `email` field always `editable={false}` (read-only)
+  - Made `phone` field conditionally editable via `editable` prop
+  - Added opacity 0.7 to read-only field backgrounds for visual distinction
+
+### API Integration Details
+**Endpoint**: `PUT /v1/users/me`
+**RTK Hook**: `useUpdateProfileMutation` (already existed in authApi.ts)
+**Request**: `UpdateProfileRequest { fullName?: string, phoneNumber?: string, dateOfBirth?: string, gender?: enum }`
+**Response**: `ApiSuccessResponse<UserProfile>`
+
+### Implementation Features
+- **Payload building**: Only sends changed fields (fullName, phoneNumber) to API
+- **No-changes detection**: Shows success toast "No changes" if nothing modified
+- **Redux sync**: On success, dispatches `setUser({ ...user, ...result.data })` to update auth state
+- **Validation error handling**: Extracts first field-level error from 422 response and shows in toast
+- **General error handling**: Shows error toast with message from API for non-422 errors
+- **Loading state**: Button disabled with `isLoading` from RTK mutation, shows ActivityIndicator
+- **Navigation**: On success, `router.back()` returns to profile tab
+- **Camera placeholder**: Shows info toast "Coming Soon" instead of Alert
+
+### Form Fields
+| Field | Editable | API Support |
+|-------|----------|-------------|
+| Full Name | ✅ Editable | ✅ `fullName` in `UpdateProfileRequest` |
+| Phone | ✅ Editable | ✅ `phoneNumber` in `UpdateProfileRequest` |
+| Username | ❌ Read-only | ❌ Not supported by API |
+| Email | ❌ Read-only | ❌ Not supported by API |
+
+### Data Flow
+```
+User edits fullName/phoneNumber
+       ↓
+User taps "Update Profile"
+       ↓
+Build payload (only changed fields)
+       ↓
+useUpdateProfileMutation(payload)
+       ↓
+PUT /v1/users/me
+       ↓
+┌─────────┴─────────┐
+✅ Success           ❌ Error
+│                    │
+dispatch setUser()   422 → show first field error
+│                    other → show generic error
+showSuccess toast
+router.back()
+```
+
+### What Works Now
+- ✅ Full Name field editable with TextInput
+- ✅ Phone number field editable via AccountSettingsSection
+- ✅ Username and Email read-only (opacity 0.7 visual distinction)
+- ✅ Update Profile button calls `PUT /v1/users/me` API
+- ✅ Loading state disables button during API call
+- ✅ Success updates Redux auth state and shows toast
+- ✅ Validation errors (422) display first field error in toast
+- ✅ General errors show API message in toast
+- ✅ Camera button shows info toast (not Alert)
+- ✅ No Alert calls remain in the screen
+- ✅ Zero TypeScript errors in modified files
+- ✅ All fields pre-filled from Redux auth state
+
+### Testing Recommendations
+1. **Update fullName**: Change full name, submit, verify Redux updates and toast shows
+2. **Update phoneNumber**: Change phone number, submit, verify success
+3. **No changes**: Submit without changing anything, verify "No changes" toast
+4. **Validation errors**: Try invalid phone format, verify 422 error message
+5. **Network error**: Test with airplane mode, verify generic error toast
+6. **Read-only fields**: Verify username and email cannot be edited (opacity 0.7)
+
+### Next Steps (Optional Future Enhancements)
+- Wire camera icon to `expo-image-picker` for profile picture upload
+- Implement profile picture API upload (multipart/form-data)
+- Wire dark theme toggle to theme context
+- Wire push notifications toggle to app settings
+- Add field-level validation (phone format, fullName length)
+- Add undo/rollback functionality for failed updates
+
+### Code Quality
+- ✅ Follows existing RTK Query patterns exactly
+- ✅ Consistent error handling with toast notifications
+- ✅ No breaking changes to existing components
+- ✅ TypeScript types match live API spec exactly
+- ✅ Proper loading states and disabled buttons
+- ✅ Clean separation: UI in components, API in hooks

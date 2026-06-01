@@ -802,3 +802,128 @@ This ensures that:
 - Applying for a loan refreshes the loan list
 - Canceling a loan refreshes that specific loan
 
+---
+
+## PUT /v1/users/me — Update Profile (Task 06)
+
+**Purpose**: Update user's profile information (fullName, phoneNumber, dateOfBirth, gender)
+
+**Auth Required**: ✅ Yes (JWT Bearer Token — auto-injected by RTK Query)
+
+**RTK Hook**: `useUpdateProfileMutation` (already exists in `shared/libs/redux/features/auth/authApi.ts`)
+
+**Type Location**: `shared/libs/types/auth.types.ts`
+
+### Request (UpdateProfileRequest)
+
+```typescript
+interface UpdateProfileRequest {
+  fullName?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;   // "YYYY-MM-DD" format
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+}
+```
+
+**All fields are optional** - only send fields that should be updated
+
+### Response
+
+```typescript
+interface ApiSuccessResponse<UserProfile> {
+  success: true;
+  message: string;
+  data: UserProfile; // Full updated user object
+}
+
+interface UserProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  username: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+  age?: number;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+  role: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  profile?: UserProfileBasicInfo | null;
+  addresses?: Address[];
+}
+```
+
+### Error Responses
+
+**401 Unauthorized**: JWT token invalid or expired
+
+**422 Validation Error**:
+```typescript
+{
+  success: false,
+  message: "Validation failed",
+  errors: Record<string, string[]> // e.g., { phoneNumber: ["Phone number is invalid"] }
+}
+```
+
+### Usage Example (Edit Profile Screen)
+
+```typescript
+import { useUpdateProfileMutation } from '@/shared/libs/redux/features/auth/authApi';
+import { setUser } from '@/shared/libs/redux/features/auth/authSlice';
+import { useToast } from '@/shared/hooks/useToast';
+
+const [updateProfile, { isLoading }] = useUpdateProfileMutation();
+const dispatch = useAppDispatch();
+const { showSuccess, showError } = useToast();
+const { user } = useAppSelector((state) => state.auth);
+
+const handleUpdateProfile = async (fullName: string, phoneNumber: string) => {
+  // Build payload — only include changed fields
+  const payload: UpdateProfileRequest = {};
+  if (fullName.trim() && fullName.trim() !== user?.fullName) {
+    payload.fullName = fullName.trim();
+  }
+  if (phoneNumber.trim() && phoneNumber.trim() !== user?.phoneNumber) {
+    payload.phoneNumber = phoneNumber.trim();
+  }
+
+  // Nothing changed
+  if (Object.keys(payload).length === 0) {
+    showSuccess({ title: 'No changes', message: 'Nothing to update' });
+    return;
+  }
+
+  try {
+    const result = await updateProfile(payload).unwrap();
+    // Update Redux auth state so the whole app sees fresh data
+    if (result.data) {
+      dispatch(setUser({ ...user!, ...result.data }));
+    }
+    showSuccess({ title: 'Profile Updated', message: 'Your profile has been updated.' });
+    router.back();
+  } catch (error: any) {
+    if (error?.status === 422 && error?.data?.errors) {
+      const firstError = Object.values(error.data.errors as Record<string, string[]>)[0]?.[0];
+      showError({ title: 'Validation Error', message: firstError ?? 'Please check your input' });
+    } else {
+      showError({
+        title: 'Update Failed',
+        message: error?.data?.message ?? 'Something went wrong. Please try again.',
+      });
+    }
+  }
+};
+```
+
+### Key Points
+
+1. **Never attach `Authorization` header manually** — RTK Query auto-injects it via `apiSlice.ts`
+2. **Only send changed fields** — The API accepts partial updates
+3. **Dispatch `setUser()` after success** — Updates Redux auth state so all screens see fresh data
+4. **Handle 422 validation errors** — Extract first field error and show to user
+5. **Use `isLoading` from RTK hook** — Disables button and shows ActivityIndicator during request
+
+

@@ -246,7 +246,7 @@ export default function MyLoansScreen() {
                 )}
 
                 {/* Chevron right */}
-                <ChevronRightIcon color="#CCC" size={18} style={{ position: 'absolute', right: 16, top: '50%', marginTop: -9 }} />
+                <ChevronRightIcon color="#CCC" size={18} className="absolute right-4 top-1/2 -mt-2" />
               </TouchableOpacity>
             ))
           )}

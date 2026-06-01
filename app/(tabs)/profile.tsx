@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useSafePadding } from '@/shared/hooks/useSafePadding';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafePadding } from '@/shared/hooks/useSafePadding';
 import { useAppDispatch, useAppSelector } from '@/shared/hooks/useAppSelector';
 import { setLogout } from '@/shared/libs/redux/features/auth/authSlice';
-import { useState } from 'react';
 import {
   ProfileIcon,
   SecurityIcon,
@@ -15,6 +15,15 @@ import {
   BellIcon,
 } from '@/components/UI/icons/svg-icons';
 
+// ─── constants ───────────────────────────────────────────────────────────────
+const AVATAR_SIZE = 117; // diameter px
+const OVERLAP = AVATAR_SIZE / 2; // 58.5px — half avatar in green
+const GREEN_HEADER_HEIGHT = OVERLAP + 160; // Green space for nav + title + top half of avatar + name + ID
+const CARD_RADIUS = 70;
+const MENU_ITEM_HEIGHT = 53;
+const MENU_ITEM_GAP = 16;
+
+// ─── component ───────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const { paddingTop, scrollPaddingBottom } = useSafePadding();
   const router = useRouter();
@@ -89,133 +98,113 @@ export default function ProfileScreen() {
     },
   ];
 
+  const initial = user?.fullName?.charAt(0).toUpperCase() ?? 'U';
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#00D09E' }}>
-      {/* Header */}
+    <View className="flex-1" style={{ backgroundColor: '#00D09E' }}>
+      {/* ══════════════════════════════════════════════════════
+          GREEN HEADER — nav row + title
+      ══════════════════════════════════════════════════════ */}
       <View
         style={{
-          paddingTop: paddingTop + 20,
+          paddingTop: paddingTop + 10,
           paddingHorizontal: 38,
-          paddingBottom: scrollPaddingBottom,
+          paddingBottom: OVERLAP,
         }}>
         {/* Top Row */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}>
-          <TouchableOpacity onPress={() => router.back()}>
+        {/* <View className="flex-row items-center justify-between"> */}
+        {/* Back */}
+        {/* <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <BackIcon />
-          </TouchableOpacity>
-          <View
+          </TouchableOpacity> */}
+
+        {/* Bell Icon */}
+        {/* <View
+            className="items-center justify-center overflow-hidden rounded-full"
             style={{
-              backgroundColor: '#DFF7E2',
-              borderRadius: 25.7,
               width: 30,
               height: 30,
-              alignItems: 'center',
-              justifyContent: 'center',
+              backgroundColor: '#DFF7E2',
+              borderRadius: 25.7,
             }}>
             <BellIcon />
-          </View>
-        </View>
+          </View> */}
+        {/* </View> */}
 
         {/* Title */}
-        <View
-          style={{
-            marginTop: 20,
-            alignItems: 'center',
-          }}>
+        {/* <View className="mt-5 items-center">
           <Text
-            style={{
-              fontFamily: 'Poppins-Bold',
-              fontSize: 20,
-              color: '#0E3E3E',
-              textTransform: 'capitalize',
-            }}>
+            className="font-poppins-semibold text-center capitalize text-[#0E3E3E]"
+            style={{ fontSize: 20 }}>
             Profile
           </Text>
-        </View>
+        </View> */}
+      </View>
 
-        {/* Profile Avatar */}
-        <View
-          style={{
-            marginTop: 10,
-            alignItems: 'center',
-          }}>
+      {/* ══════════════════════════════════════════════════════
+          WHITE CARD — avatar + name + ID + menu items
+          Avatar is pulled up by OVERLAP px so half sits in green
+      ══════════════════════════════════════════════════════ */}
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: '#F0FFF4',
+          borderTopLeftRadius: CARD_RADIUS,
+          borderTopRightRadius: CARD_RADIUS,
+          paddingHorizontal: 38,
+          marginTop: 76,
+        }}>
+        {/* ── Avatar (straddles green / white boundary) ── */}
+        <View style={{ alignItems: 'center', marginTop: -OVERLAP }}>
+          {/* Avatar Circle */}
           <View
             style={{
-              width: 117,
-              height: 117,
-              borderRadius: 58.5,
+              width: AVATAR_SIZE,
+              height: AVATAR_SIZE,
+              borderRadius: AVATAR_SIZE / 2,
               backgroundColor: '#C5F0DC',
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: 20,
             }}>
             <Text
-              style={{
-                fontFamily: 'Poppins-Bold',
-                fontSize: 48,
-                color: '#00D09E',
-              }}>
-              {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+              className="font-poppins-bold text-[#00D09E]"
+              style={{ fontSize: 48, lineHeight: 52 }}>
+              {initial}
             </Text>
           </View>
 
           {/* User Name */}
           <Text
-            style={{
-              fontFamily: 'Poppins-Bold',
-              fontSize: 20,
-              color: '#0E3E3E',
-              textTransform: 'capitalize',
-            }}>
-            {user?.fullName || 'User Name'}
+            className="font-poppins-bold text-center capitalize text-[#0E3E3E]"
+            style={{ fontSize: 20, marginTop: 12 }}>
+            {user?.fullName ?? 'User Name'}
           </Text>
 
           {/* User ID */}
           <Text
-            style={{
-              fontFamily: 'Poppins-SemiBold',
-              fontSize: 13,
-              color: '#093030',
-              marginTop: 4,
-            }}>
-            ID:{' '}
-            <Text
-              style={{
-                fontFamily: 'Poppins-Light',
-              }}>
-              {user?.id || 'N/A'}
-            </Text>
+            className="font-poppins-medium text-center text-[#093030]"
+            style={{ fontSize: 13, marginTop: 2 }}>
+            ID: <Text className="font-poppins-light">{user?.id ?? 'N/A'}</Text>
           </Text>
         </View>
-      </View>
-      {/* Menu Items */}
-      <View
-        style={{
-          backgroundColor: '#F0FFF4',
-          borderTopLeftRadius: 70,
-          borderTopRightRadius: 70,
-          paddingHorizontal: 38,
-          paddingTop: 24,
-          paddingBottom: scrollPaddingBottom,
-          minHeight: 600,
-        }}>
-        <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-          <View style={{ flex: 1, minHeight: 600 }}>
-            {menuItems.map((item, index) => (
+
+        {/* ── Menu Items ── */}
+        <ScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingTop: 24,
+            paddingBottom: scrollPaddingBottom + 40,
+          }}>
+          <View className="gap-4">
+            {menuItems.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 onPress={item.onPress}
                 activeOpacity={0.7}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginBottom: index === menuItems.length - 1 ? 0 : 16,
-                }}>
+                className="flex-row items-center gap-[13px]">
                 <View
                   style={{
                     width: 57,
@@ -228,52 +217,42 @@ export default function ProfileScreen() {
                   {item.icon}
                 </View>
                 <Text
-                  style={{
-                    fontFamily: 'Poppins-Medium',
-                    fontSize: 15,
-                    color: '#093030',
-                    marginLeft: 13,
-                    textTransform: 'capitalize',
-                  }}>
+                  className="font-poppins-medium capitalize text-[#093030]"
+                  style={{ fontSize: 15 }}>
                   {item.title}
                 </Text>
               </TouchableOpacity>
             ))}
-
-            {/* Logout Button */}
-            <TouchableOpacity
-              onPress={handleLogout}
-              disabled={isLoggingOut}
-              activeOpacity={0.7}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 16,
-                opacity: isLoggingOut ? 0.5 : 1,
-              }}>
-              <View
-                style={{
-                  width: 57,
-                  height: 53,
-                  borderRadius: 22,
-                  backgroundColor: '#0068FF',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
-                <LogoutIcon />
-              </View>
-              <Text
-                style={{
-                  fontFamily: 'Poppins-Medium',
-                  fontSize: 15,
-                  color: '#093030',
-                  marginLeft: 13,
-                  textTransform: 'capitalize',
-                }}>
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
-              </Text>
-            </TouchableOpacity>
           </View>
+
+          {/* Logout Button */}
+          <TouchableOpacity
+            onPress={handleLogout}
+            disabled={isLoggingOut}
+            activeOpacity={0.7}
+            className="mt-4 flex-row items-center gap-[13px]"
+            style={{ opacity: isLoggingOut ? 0.5 : 1 }}>
+            <View
+              style={{
+                width: 57,
+                height: 53,
+                borderRadius: 22,
+                backgroundColor: '#0068FF',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <LogoutIcon />
+            </View>
+            {isLoggingOut ? (
+              <ActivityIndicator size="small" color="#093030" />
+            ) : (
+              <Text
+                className="font-poppins-medium capitalize text-[#093030]"
+                style={{ fontSize: 15 }}>
+                Logout
+              </Text>
+            )}
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </View>
